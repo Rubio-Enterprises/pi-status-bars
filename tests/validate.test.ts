@@ -36,6 +36,40 @@ test.each([
 ])('rejects whole invalid publication %#', (patch) => {
   expect(validate({ ...publication(), ...patch })).toBeUndefined();
 });
+test.each(['compact', 'terse', 'minimal'] as const)(
+  'accepts schema-valid undefined optional form %s and leaves it absent',
+  (level) => {
+    const p = publication([
+      segment('fake.one', { forms: { full: [text('hello\nworld')], [level]: undefined } }),
+    ]);
+    expect(Value.Check(PublicationSchema, p)).toBe(true);
+    const valid = validate(p);
+    expect(valid?.segments[0]?.forms).toEqual({ full: [text('hello world')] });
+    expect(Value.Check(PublicationSchema, valid)).toBe(true);
+  },
+);
+test('requires an own full form even when the schema accepts an inherited full', () => {
+  const forms = Object.create({ full: [text('inherited')] });
+  const p = publication([segment('fake.one', { forms })]);
+  expect(Value.Check(PublicationSchema, p)).toBe(true);
+  expect(() => validate(p)).not.toThrow();
+  expect(validate(p)).toBeUndefined();
+});
+test('copies recognized own forms including non-enumerable full, not inherited or extra forms', () => {
+  const forms = Object.defineProperty(Object.create({ compact: [text('inherited')] }), 'full', {
+    value: [text('own\nfull')],
+  });
+  forms.terse = [text('own\nterse')];
+  forms.extra = [text('extra')];
+  const p = publication([segment('fake.one', { forms })]);
+  expect(Value.Check(PublicationSchema, p)).toBe(true);
+  const valid = validate(p);
+  expect(valid?.segments[0]?.forms).toEqual({
+    full: [text('own full')],
+    terse: [text('own terse')],
+  });
+  expect(Value.Check(PublicationSchema, valid)).toBe(true);
+});
 test('limits are inclusive and publication is sanitized without mutating publisher data', () => {
   const s = segment('fake.one', { forms: { full: [text('a\n\t\u001b\u009b\u2028b')] } });
   const p = publication([s]);

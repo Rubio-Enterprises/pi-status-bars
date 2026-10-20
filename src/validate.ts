@@ -1,5 +1,5 @@
 import { Value } from 'typebox/value';
-import { type Part, type Publication, PublicationSchema } from './contract.ts';
+import { type Part, type Publication, PublicationSchema, type Segment } from './contract.ts';
 
 export function sanitize(text: string): string {
   return Array.from(text, (character) => {
@@ -31,18 +31,26 @@ export function validate(payload: unknown): Publication | undefined {
     if (!Value.Check(PublicationSchema, payload)) return undefined;
     const ids = new Set<string>();
     for (const segment of payload.segments) {
-      if (!segment.id.startsWith(`${payload.publisher}.`) || ids.has(segment.id)) return undefined;
+      if (
+        !segment.id.startsWith(`${payload.publisher}.`) ||
+        ids.has(segment.id) ||
+        !Object.hasOwn(segment.forms, 'full')
+      )
+        return undefined;
       ids.add(segment.id);
     }
     return {
       version: 1,
       publisher: payload.publisher,
-      segments: payload.segments.map((segment) => ({
-        ...segment,
-        forms: Object.fromEntries(
-          Object.entries(segment.forms).map(([level, parts]) => [level, parts.map(cleanPart)]),
-        ) as typeof segment.forms,
-      })),
+      segments: payload.segments.map((segment) => {
+        const forms: Segment['forms'] = { full: segment.forms.full.map(cleanPart) };
+        for (const level of ['compact', 'terse', 'minimal'] as const) {
+          if (!Object.hasOwn(segment.forms, level)) continue;
+          const parts = segment.forms[level];
+          if (parts !== undefined) forms[level] = parts.map(cleanPart);
+        }
+        return { ...segment, forms };
+      }),
     };
   } catch {
     return undefined;
