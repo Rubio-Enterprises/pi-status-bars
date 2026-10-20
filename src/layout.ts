@@ -106,7 +106,7 @@ export function layout(
       const texts = row.entries
         .filter((entry) => entry.place.zone === zone)
         .map((entry) => entry.text)
-        .filter(Boolean);
+        .filter((text) => visibleWidth(text) > 0);
       if (row.markers[zone]) texts.push(marker(zone));
       return texts.join(separator);
     };
@@ -152,13 +152,13 @@ export function layout(
 
   function pack(rendered: Rendered[]): Row[] {
     const displayed = rendered.filter((entry) => entry.displayedWidth > 0);
-    const final = displayed.at(-1) ?? rendered.at(-1);
+    const final = displayed.at(-1);
     const tails = {
       left: displayed.filter((entry) => entry.place.zone === 'left').at(-1) ?? final,
       right: displayed.filter((entry) => entry.place.zone === 'right').at(-1) ?? final,
     };
     const rows: Row[] = [];
-    for (const entry of rendered) {
+    for (const entry of final ? rendered : [...rendered, undefined]) {
       const markers: Row['markers'] = {};
       for (const zone of ['left', 'right'] as const) {
         const count = counts[zone];
@@ -176,8 +176,10 @@ export function layout(
       }
       function append(target: Row): Record<ZoneName, number> {
         const widths = { ...target.widths };
-        const zone = entry.place.zone;
-        if (entry.measuredWidth) widths[zone] += (widths[zone] ? 3 : 0) + entry.measuredWidth;
+        if (entry?.measuredWidth) {
+          const zone = entry.place.zone;
+          widths[zone] += (widths[zone] ? 3 : 0) + entry.measuredWidth;
+        }
         for (const zone of ['left', 'right'] as const) {
           const markerWidth = markers[zone];
           if (markerWidth) widths[zone] += (widths[zone] ? 3 : 0) + markerWidth;
@@ -185,12 +187,12 @@ export function layout(
         return widths;
       }
       let widths = append(row);
-      if (row.entries.length && rowWidth(widths) > width) {
+      if (row.size && rowWidth(widths) > width && rowWidth(widths) > row.size) {
         row = { entries: [], markers: {}, widths: { left: 0, right: 0 }, size: 0 };
         rows.push(row);
         widths = append(row);
       }
-      row.entries.push(entry);
+      if (entry) row.entries.push(entry);
       Object.assign(row.markers, markers);
       row.widths = widths;
       row.size = rowWidth(widths);

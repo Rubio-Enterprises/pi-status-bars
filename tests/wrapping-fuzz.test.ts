@@ -11,7 +11,19 @@ test('seeded layout fuzz: never throws, exceeds columns/row cap, mutates inputs 
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
     return seed % limit;
   };
-  const words = ['ASCII', '中文', '👨‍👩‍👧‍👦', 'é', '', '●', 'long title '.repeat(15)];
+  const words = [
+    'ASCII',
+    '中文',
+    '👨‍👩‍👧‍👦',
+    'é',
+    '',
+    '\u200d',
+    '\u200b',
+    '\u0301',
+    '\u0308\u0301',
+    '●',
+    'long title '.repeat(15),
+  ];
   for (let trial = 0; trial < 1200; trial++) {
     const cap = 1 + random(4);
     const width =
