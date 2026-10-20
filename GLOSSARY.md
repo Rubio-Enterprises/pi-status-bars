@@ -45,7 +45,7 @@ One piece of meaning inside a form, such as a label, a value, a meter, a note, o
 _Avoid_: token, span, chunk
 
 **Elastic part**:
-A part, such as a pull request title, that takes whatever width is left on its line and is cut short to fit.
+A part, such as a pull request title, that takes whatever width is left on its row and is cut short to fit.
 _Avoid_: flex part, filler
 
 **Publisher**:
