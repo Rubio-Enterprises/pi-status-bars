@@ -258,7 +258,7 @@ test('zone gap is at least three columns; right-only segments align right', () =
   ]);
   expect(layout(segments, new Map(), 'above', 5, now, plain).rows).toEqual(['L   R']);
 });
-test('drop priorities match exposure, gemini, chatgpt, claude; markers stay in original zone', () => {
+test('backfill restores exposure without reversing usage drop priorities; markers stay in original zone', () => {
   const output = layout(
     usage(),
     parseConfig({ lines: { below: { maxRows: 1 } } }, () => {}),
@@ -267,7 +267,7 @@ test('drop priorities match exposure, gemini, chatgpt, claude; markers stay in o
     now,
     plain,
   );
-  expect(output.dropped).toEqual(['exposure.summary', 'usage.gemini', 'usage.chatgpt']);
+  expect(output.dropped).toEqual(['usage.gemini', 'usage.chatgpt']);
   expect(output.rows.join('')).toContain('+2');
 });
 test('drop ties: later order, then lexically later ID; sorting uses order then ID', () => {

@@ -51,7 +51,7 @@ export function layout(
   hyperlinks = false,
 ): LayoutResult {
   width = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
-  let remaining: Entry[] = segments
+  const collected: Entry[] = segments
     .map((segment) => ({
       segment,
       place: placement(segment, config),
@@ -64,6 +64,7 @@ export function layout(
         a.place.order - b.place.order ||
         compare(a.segment.id, b.segment.id),
     );
+  let remaining = collected.slice();
   const levels: Record<string, DetailLevel> = Object.fromEntries(
     remaining.map(({ group }) => [group, 'full']),
   );
@@ -201,6 +202,56 @@ export function layout(
   if (!fits(packed)) {
     showCritical = false;
     packed = pack();
+  }
+
+  if (fits(packed)) {
+    const priorities = new Map<string, number>();
+    for (const entry of collected)
+      priorities.set(
+        entry.group,
+        Math.max(priorities.get(entry.group) ?? -Infinity, entry.place.priority),
+      );
+    const groups = [...priorities].sort((a, b) => b[1] - a[1] || compare(a[0], b[0]));
+    let accepted: boolean;
+    do {
+      accepted = false;
+      for (const [group] of groups) {
+        const restore = [...dropped]
+          .reverse()
+          .map((id) => collected.find((entry) => entry.segment.id === id))
+          .find((entry) => entry?.group === group);
+        const level = levels[group] ?? 'full';
+        if (!restore && level === 'full') continue;
+        const previous = remaining;
+        let dropIndex = -1;
+        if (restore) {
+          dropIndex = dropped.indexOf(restore.segment.id);
+          dropped.splice(dropIndex, 1);
+          remaining = collected.filter((entry) => !dropped.includes(entry.segment.id));
+          const count = counts[restore.place.zone];
+          count.total--;
+          const status = overflowStatus(restore.segment);
+          if (status) count[status]--;
+        } else {
+          levels[group] = DETAIL_LEVELS[DETAIL_LEVELS.indexOf(level) - 1] ?? 'full';
+        }
+        const trial = pack();
+        if (fits(trial)) {
+          packed = trial;
+          accepted = true;
+        } else {
+          remaining = previous;
+          levels[group] = level;
+          if (restore) {
+            dropped.splice(dropIndex, 0, restore.segment.id);
+            const count = counts[restore.place.zone];
+            count.total++;
+            const status = overflowStatus(restore.segment);
+            if (status) count[status]++;
+          }
+        }
+      }
+    } while (accepted);
   }
 
   let elasticAssigned = false;

@@ -143,12 +143,18 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
 - Lines greedily wrap up to their row cap before degradation. Rows use visible columns,
   never string length; no blank rows are reserved.
 - Pack left-zone segments by order then ID, followed by right-zone segments in that order;
-  never reorder or backfill. Each row right-aligns its right zone with at least a three-column
+  never reorder segments to fill gaps. Each row right-aligns its right zone with at least a three-column
   gap when both zones are present.
 - A group is the segment ID prefix before the first dot. Its priority is the highest effective
   priority among its visible segments. Lowest-priority groups degrade first (ties: group name,
   ascending), all their segments in lockstep. Exhaust a group through minimal and dropping
   before touching the next group. Repack after every step.
+- Once fitting, backfill in descending group priority (ties: group name ascending), one restore
+  step per group per pass. Re-add its most recently dropped segment first (reverse drop order);
+  only when none remain dropped, raise its shared detail level by one. Accept only steps that
+  still fit the width and row cap using the same fixed countdown widths; otherwise revert.
+  Leave every other group unchanged, and repeat until no step is accepted. Declared segment
+  order stays intact; a rejected latest drop cannot be skipped for an older one.
 - Packing omits elastic parts. Afterwards, one elastic part takes its own row's leftover width, truncating with `…`; fewer than eight columns omits it.
   If multiple publishers nominate one, only the first in left-zone/right-zone order receives space.
 - Within the chosen group at minimal detail, lowest priority drops first; ties drop later order,
@@ -162,6 +168,9 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
   uses the natural rendered width. With the worked usage fixture at 167 columns, cap 2 keeps
   both groups full. Cap 1 drops exposure first, then compacts usage: full usage reserves 166
   columns and the right-zone marker needs another five, even though natural text is shorter.
+  Backfill then restores compact exposure, removing the marker. At width 90/cap 2, usage stays
+  compact and full exposure returns right-aligned on row 2. At width 60/cap 2, usage stays terse
+  and full exposure returns on row 2. Backfill never sacrifices higher-priority detail.
 - Default below-line drop order is exposure, gemini, chatgpt, claude (publisher priorities).
 - Semantic styling uses Pi theme roles. Meters have six cells and disappear below compact;
   countdowns use the `dim` theme colour, full/compact durations, terse largest units,
@@ -179,7 +188,8 @@ mise run test
 ```
 
 Tests include plain-theme layout goldens at 200/167/160/130/110/90/80/60/45/20 columns,
-seeded layout and validation fuzz, row-cap configuration, countdown stability and toggle tests.
+seeded layout and validation fuzz, row-cap configuration, backfill priority/reverse-drop/retry
+and determinism tests, countdown stability and toggle tests.
 Real Pi 1.3.0 SDK sessions cover both load orders, two-row rendering, replacement, clearing,
 reload and shutdown.
 The canonical Bun runner rejects zero tests and records positive-count proof for Test Gate.

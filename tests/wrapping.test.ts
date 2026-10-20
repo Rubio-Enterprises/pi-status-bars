@@ -17,12 +17,12 @@ test('width 167, default below cap 2: full usage then right-aligned full exposur
 
 const compactUsage =
   'claude 5h ╺────╴ 24% ↻2h18m | wk ╺━───╴ 25% ↻4d6h │ chatgpt wk ╶────╴ 5% ↻6d14h │ gemini 5h ╶────╴ 0% ↻4h57m | wk ╶────╴ 0% ↻6d23h';
-test('width 167, cap 1: fixed countdown reservations plus +1 require compact usage', () => {
+test('width 167, cap 1: compact usage permits compact exposure backfill', () => {
   const config = parseConfig({ lines: { below: { maxRows: 1 } } }, () => {});
   expect(layout(realisticUsage(), config, 'below', 167, now, plain)).toEqual({
-    rows: [`${compactUsage + ' '.repeat(35)}+1`],
-    levels: { usage: 'compact', exposure: 'minimal' },
-    dropped: ['exposure.summary'],
+    rows: [`${compactUsage}${' '.repeat(18)}⊘ 2 tools · 1 skill`],
+    levels: { usage: 'compact', exposure: 'compact' },
+    dropped: [],
     countdown: true,
   });
   expect(layout(realisticUsage(), config, 'below', 171, now, plain)).toEqual({
@@ -37,33 +37,46 @@ test.each([
     width: 90,
     rows: [
       'claude 5h ╺────╴ 24% ↻2h18m | wk ╺━───╴ 25% ↻4d6h │ chatgpt wk ╶────╴ 5% ↻6d14h',
-      `gemini 5h ╶────╴ 0% ↻4h57m | wk ╶────╴ 0% ↻6d23h${' '.repeat(40)}+1`,
+      `gemini 5h ╶────╴ 0% ↻4h57m | wk ╶────╴ 0% ↻6d23h${' '.repeat(5)}exposure 2 tools off · 1 skill hidden`,
     ],
     usage: 'compact',
-    dropped: ['exposure.summary'],
+    exposure: 'full',
+    dropped: [],
   },
   {
     width: 60,
-    rows: ['claude 5h 24% | wk 25% │ chatgpt wk 5%', `gemini 5h 0% | wk 0%${' '.repeat(38)}+1`],
+    rows: [
+      'claude 5h 24% | wk 25% │ chatgpt wk 5%',
+      'gemini 5h 0% | wk 0%   exposure 2 tools off · 1 skill hidden',
+    ],
     usage: 'terse',
-    dropped: ['exposure.summary'],
+    exposure: 'full',
+    dropped: [],
   },
   {
     width: 45,
-    rows: ['claude 5h 24% | wk 25% │ chatgpt wk 5%', `gemini 5h 0% | wk 0%${' '.repeat(23)}+1`],
+    rows: [
+      'claude 5h 24% | wk 25% │ chatgpt wk 5%',
+      'gemini 5h 0% | wk 0%      ⊘ 2 tools · 1 skill',
+    ],
     usage: 'terse',
-    dropped: ['exposure.summary'],
+    exposure: 'compact',
+    dropped: [],
   },
   {
     width: 20,
-    rows: ['cl 5h 24% | wk 25%', 'gpt wk 5% │ +1    +1'],
+    rows: ['cl 5h 24% | wk 25%', 'gpt wk 5% │ +1    ⊘3'],
     usage: 'minimal',
-    dropped: ['exposure.summary', 'usage.gemini'],
+    dropped: ['usage.gemini'],
   },
-])('worked width $width, cap 2', ({ width, rows, usage, dropped }) => {
+])('worked width $width, cap 2', (expected) => {
+  const { width, rows, usage, dropped } = expected;
   const result = layout(realisticUsage(), new Map(), 'below', width, now, plain);
   expect(result.rows).toEqual([...rows]);
-  expect(result.levels).toEqual({ usage, exposure: 'minimal' });
+  expect(result.levels).toEqual({
+    usage,
+    exposure: expected.exposure ?? 'minimal',
+  });
   expect(result.dropped).toEqual([...dropped]);
   expect(result.rows.length).toBeLessThanOrEqual(2);
   for (const row of result.rows) expect(visibleWidth(row)).toBeLessThanOrEqual(width);
@@ -81,7 +94,7 @@ test('clock width changes preserve row assignments and group levels at every lev
   }
 });
 
-test('greedy order is left then right, never backfilled; no spare rows reserved', () => {
+test('greedy order is left then right, never reordered; no spare rows reserved', () => {
   const segments = [
     segment('a.second', { line: 'below', order: 20, forms: { full: [text('BBBBBB')] } }),
     segment('a.first', { line: 'below', order: 10, forms: { full: [text('AAAAAA')] } }),

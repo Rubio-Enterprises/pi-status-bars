@@ -69,6 +69,9 @@ test('seeded layout fuzz: never throws, exceeds columns/row cap, mutates inputs 
               `\u001b[32m${text}\u001b[0m`,
           };
     const output = layout(segments, config, line, width, now, theme, trial % 3 === 0);
+    expect(
+      layout([...segments].reverse(), config, line, width, now, theme, trial % 3 === 0),
+    ).toEqual(output);
     expect(output.rows.length).toBeLessThanOrEqual(cap);
     for (const row of output.rows) {
       expect(visibleWidth(row)).toBeLessThanOrEqual(columns);

@@ -21,7 +21,10 @@ Invariants:
 - The contract is frozen for v1. Publishers compile against its exported types in parallel;
   contract changes require coordinated approval.
 - Greedily wrap within each line's row cap before degrading publisher groups in priority order.
-  Keep each group in lockstep; exhaust it before the next. Measure countdowns at fixed widths,
+  Keep each group in lockstep; exhaust it before the next. Once fitting, backfill in descending
+  group priority (name ascending on ties): restore the latest drop first, otherwise raise one level;
+  accept only fitting steps, retry to a fixed point, and leave other groups unchanged.
+  Measure countdowns at fixed widths,
   keep zone-local overflow counts, and bound every row by visible terminal columns.
 - Only one elastic part gets width, and only one unref clock runs for visible countdowns.
 - Register bus listeners in the factory; session start clears state then requests publications.
