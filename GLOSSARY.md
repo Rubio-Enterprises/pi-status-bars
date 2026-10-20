@@ -9,7 +9,7 @@ Pi's built-in rows at the very bottom of the screen, including the shared row of
 _Avoid_: status line, statusline
 
 **Line**:
-One full-width row the renderer owns next to the editor.
+A full-width flow of segments the renderer owns next to the editor, spanning up to its row cap.
 _Avoid_: widget, bar, status line
 
 **Segment**:
@@ -21,11 +21,19 @@ One way of showing a segment at a given amount of detail. A segment offers sever
 _Avoid_: variant, version, mode
 
 **Detail level**:
-One step on the shared scale, from full to minimal, that every segment on a line is shown at together. A line drops to the next level only when it no longer fits.
+One step on the shared scale, from full to minimal, that every segment in a group is shown at together. A group lowers detail only when its line exceeds its row cap.
 _Avoid_: shrink step, tier, mode
 
+**Row cap**:
+The maximum number of terminal rows a line may occupy. Unneeded rows are not reserved.
+_Avoid_: height, line count
+
+**Group**:
+Segments from the same publisher, sharing a detail level. Its priority is the highest priority among its visible segments.
+_Avoid_: cohort, batch
+
 **Priority**:
-How long a segment stays on its line when the line runs out of room at the least detailed level; the lowest goes first and is counted in a `+N` marker.
+How long a group keeps its detail and a segment stays on its line when space runs out. The lowest-priority group degrades and drops segments first; dropped segments count in a `+N` marker.
 _Avoid_: rank, weight, order
 
 **Zone**:
@@ -37,7 +45,7 @@ One piece of meaning inside a form, such as a label, a value, a meter, a note, o
 _Avoid_: token, span, chunk
 
 **Elastic part**:
-A part, such as a pull request title, that takes whatever width is left on its line and is cut short to fit.
+A part, such as a pull request title, that takes whatever width is left on its row and is cut short to fit.
 _Avoid_: flex part, filler
 
 **Publisher**:

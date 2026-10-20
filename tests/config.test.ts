@@ -2,7 +2,7 @@ import { afterEach, expect, test } from 'bun:test';
 import { mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ConfigStore, parseConfig, placement } from '../src/config.ts';
+import { ConfigStore, maxRows, parseConfig, placement } from '../src/config.ts';
 import { segment } from './fixture.ts';
 
 const roots: string[] = [];
@@ -16,6 +16,69 @@ function fixture() {
   const warnings: string[] = [];
   return { path, warnings, store: new ConfigStore(path, (message) => warnings.push(message)) };
 }
+test('line row caps default independently and accept integers 1–4 alongside overrides', () => {
+  expect(maxRows(new Map(), 'above')).toBe(1);
+  expect(maxRows(new Map(), 'below')).toBe(2);
+  for (const cap of [1, 2, 3, 4]) {
+    const warnings: string[] = [];
+    const config = parseConfig(
+      {
+        lines: { above: { maxRows: cap }, below: { maxRows: cap, unknown: true }, unknown: null },
+        segments: { 'fake.one': { hidden: true } },
+        unknown: true,
+      },
+      (m) => warnings.push(m),
+    );
+    expect(maxRows(config, 'above')).toBe(cap);
+    expect(maxRows(config, 'below')).toBe(cap);
+    expect(placement(segment(), config).hidden).toBe(true);
+    expect(warnings).toEqual([]);
+  }
+});
+test.each([0, -1, 5, 99, 1.5, '2', null, true, NaN, Infinity])(
+  'invalid maxRows %s is ignored, never clamped',
+  (maxRowsValue) => {
+    const warnings: string[] = [];
+    const config = parseConfig({ lines: { below: { maxRows: maxRowsValue } } }, (m) =>
+      warnings.push(m),
+    );
+    expect(maxRows(config, 'below')).toBe(2);
+    expect(warnings).toHaveLength(1);
+  },
+);
+test.each(
+  [null, [], 1, { below: null }, { above: [] }, { below: { maxRows: 0 } }].map((lines) => ({
+    lines,
+  })),
+)(
+  'invalid lines entry %# warns once per session, without losing segment overrides',
+  ({ lines }) => {
+    const { path, store, warnings } = fixture();
+    writeFileSync(path, JSON.stringify({ lines, segments: { 'fake.one': { hidden: true } } }));
+    expect(store.read().get('fake.one')).toEqual({ hidden: true });
+    store.read();
+    expect(warnings).toHaveLength(1);
+    store.resetWarnings();
+    store.read();
+    expect(warnings).toHaveLength(2);
+  },
+);
+test('unknown line keys are ignored and deleting a line-only config restores stable defaults', () => {
+  const { path, store, warnings } = fixture();
+  writeFileSync(path, JSON.stringify({ lines: { below: { other: 3 }, future: { maxRows: 4 } } }));
+  expect(maxRows(store.read(), 'below')).toBe(2);
+  expect(warnings).toEqual([]);
+  writeFileSync(path, JSON.stringify({ lines: { below: { maxRows: 4 } } }));
+  utimesSync(path, new Date(), new Date(Date.now() + 1000));
+  const configured = store.read();
+  expect(maxRows(configured, 'below')).toBe(4);
+  expect(store.read()).toBe(configured);
+  rmSync(path);
+  const empty = store.read();
+  expect(maxRows(empty, 'below')).toBe(2);
+  expect(store.read()).toBe(empty);
+});
+
 test.each([
   ['line', 'below'],
   ['zone', 'right'],

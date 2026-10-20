@@ -150,6 +150,40 @@ for (const rendererFirst of [true, false]) {
     expect(h.errors).toEqual([]);
     await h.shutdown();
   });
+  test(`SDK two-row below widget renders, hides and unmounts (${rendererFirst})`, async () => {
+    const h = await harness(
+      rendererFirst,
+      publication([
+        segment('fake.first', {
+          line: 'below',
+          order: 10,
+          forms: { full: [text('A'.repeat(45))] },
+        }),
+        segment('fake.second', {
+          line: 'below',
+          order: 20,
+          forms: { full: [text('B'.repeat(45))] },
+        }),
+      ]),
+    );
+    expect(h.render(80)).toEqual([
+      { key: 'status-bars.below', row: 'A'.repeat(45) },
+      { key: 'status-bars.below', row: 'B'.repeat(45) },
+    ]);
+    expect(h.components.size).toBe(1);
+    expect(h.placements.get('status-bars.below')).toBe('belowEditor');
+    await h.toggle();
+    try {
+      expect(h.render()).toEqual([]);
+    } finally {
+      await h.toggle();
+    }
+    expect(h.render()).toHaveLength(2);
+    h.publish(publication([]));
+    expect(h.components.size).toBe(0);
+    expect(h.errors).toEqual([]);
+    await h.shutdown();
+  });
   test(`SDK replace, clear and independent publishers (${rendererFirst})`, async () => {
     const h = await harness(rendererFirst);
     h.publish(

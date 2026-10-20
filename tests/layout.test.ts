@@ -10,7 +10,7 @@ for (const width of [200, 160, 130, 110, 90, 80, 60, 45, 20]) {
     test(`golden ${line} width ${width}`, () => {
       const output = layout(line === 'above' ? prs() : usage(), new Map(), line, width, now, plain);
       expect({ ...output, rows: output.rows.map(stripTerminalSequences) }).toMatchSnapshot();
-      expect(output.rows.length).toBeLessThanOrEqual(1);
+      expect(output.rows.length).toBeLessThanOrEqual(line === 'below' ? 2 : 1);
       expect(visibleWidth(output.rows[0] ?? '')).toBeLessThanOrEqual(width);
     });
   }
@@ -90,7 +90,7 @@ test.each<{ name: string; parts: Part[]; suffix: string }>([
     plain,
   );
   expect(output).toMatchObject({
-    level: 'minimal',
+    levels: { fake: 'minimal' },
     dropped: ['fake.drop'],
     rows: [`keep │ +1${suffix}`],
   });
@@ -145,7 +145,7 @@ test.each([
 ] as const)('overflow shrink order at width %s', (width, row) => {
   const output = layout(overflowSegments(), new Map(), 'above', width, now, plain);
   expect({ ...output, rows: output.rows.map(stripTerminalSequences) }).toMatchObject({
-    level: 'minimal',
+    levels: { fake: 'minimal' },
     dropped: ['fake.critical', 'fake.warn'],
     rows: [row],
     countdown: false,
@@ -208,7 +208,7 @@ test('overflow uses full status, zone overrides and existing theme roles; hidden
   }
 });
 
-test('shared detail level lowers in lockstep and form fallback is per segment', () => {
+test('group detail level lowers in lockstep and form fallback is per segment', () => {
   const segments = [
     segment('fake.a', {
       forms: { full: [text('a full')], compact: [text('a')], terse: [text('A')] },
@@ -218,7 +218,7 @@ test('shared detail level lowers in lockstep and form fallback is per segment', 
     }),
   ];
   expect(layout(segments, new Map(), 'above', 5, now, plain)).toMatchObject({
-    level: 'compact',
+    levels: { fake: 'compact' },
     rows: ['a │ b'],
   });
 });
@@ -258,9 +258,16 @@ test('zone gap is at least three columns; right-only segments align right', () =
   ]);
   expect(layout(segments, new Map(), 'above', 5, now, plain).rows).toEqual(['L   R']);
 });
-test('drop priorities match exposure, gemini, chatgpt, claude; markers stay in original zone', () => {
-  const output = layout(usage(), new Map(), 'below', 45, now, plain);
-  expect(output.dropped).toEqual(['exposure.summary', 'usage.gemini', 'usage.chatgpt']);
+test('backfill restores exposure without reversing usage drop priorities; markers stay in original zone', () => {
+  const output = layout(
+    usage(),
+    parseConfig({ lines: { below: { maxRows: 1 } } }, () => {}),
+    'below',
+    45,
+    now,
+    plain,
+  );
+  expect(output.dropped).toEqual(['usage.gemini', 'usage.chatgpt']);
   expect(output.rows.join('')).toContain('+2');
 });
 test('drop ties: later order, then lexically later ID; sorting uses order then ID', () => {
