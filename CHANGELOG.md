@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.1.1...v1.2.0) (2026-10-20)
+
+
+### Features
+
+* wrap lines before degrading publisher groups ([#8](https://github.com/Rubio-Enterprises/pi-status-bars/issues/8)) ([101e136](https://github.com/Rubio-Enterprises/pi-status-bars/commit/101e13694949c540e0158edce91f1d6f5e6aa6a1))
+
 ## [1.1.1](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.1.0...v1.1.1) (2026-10-20)
 
 
