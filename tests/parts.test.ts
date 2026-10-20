@@ -24,6 +24,18 @@ test('countdowns round up, clamp expired and format each detail level', () => {
     ),
   ).toEqual(['↻ 2h18m', '↻2h18m', '↻2h', '']);
 });
+test('countdowns use the dim theme colour at every visible detail level', () => {
+  const theme = {
+    ...plain,
+    fg: (color: Parameters<typeof plain.fg>[0], value: string) => `[${color}]${value}`,
+  };
+  const part = { kind: 'countdown', at: now + 138 * 60_000 } as const;
+  expect(
+    (['full', 'compact', 'terse', 'minimal'] as const).map((level) =>
+      renderPart(part, level, now, theme, false),
+    ),
+  ).toEqual(['[dim]↻ 2h18m', '[dim]↻2h18m', '[dim]↻2h', '']);
+});
 test('forms reuse the next more detailed form', () => {
   const s = segment('fake.one', { forms: { full: [text('full')], terse: [text('terse')] } });
   expect(form(s, 'compact')).toEqual([text('full')]);
