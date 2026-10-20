@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.2.0...v1.2.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* declare typebox as a host-provided peer dependency ([6bb9d35](https://github.com/Rubio-Enterprises/pi-status-bars/commit/6bb9d357fc2f22f8f400214b378b963fde4a816d))
+
 ## [1.2.0](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.1.1...v1.2.0) (2026-10-20)
 
 
