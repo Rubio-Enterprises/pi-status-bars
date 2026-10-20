@@ -1,0 +1,55 @@
+name: test-gate
+"on":
+  pull_request:
+  merge_group:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+jobs:
+  canonical-tests:
+    name: canonical tests
+    runs-on: ${{ fromJSON(vars.RUNNERS || '{}').light || fromJSON('["ubuntu-latest"]') }}
+    # Bound the job so a hung step fails fast instead of holding a runner until
+    # outrunner's 2h30m reaper. Raise it to about three times the suite's
+    # slowest successful run when the canonical suite needs longer.
+    timeout-minutes: 30
+    outputs:
+      tests_ran: ${{ steps.test.outputs.tests_ran }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      # Belt-and-braces for the pipx: pins in .mise.toml. Those pins now declare
+      # uv themselves, so mise provisions it; this step keeps the gate working on
+      # a repo whose .mise.toml predates that (a re-render lands it), where mise
+      # would otherwise fail with "pipx is required to install pipx:<tool>".
+      # Mirrors this repo's own .github/workflows/test-gate.yml.
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - id: test
+        name: Run canonical non-E2E tests
+        env:
+          RUBIO_TEST_GATE_COUNT_OUTPUT: ${{ runner.temp }}/test-gate-count
+        run: |
+          set -euo pipefail
+          rm -f "$RUBIO_TEST_GATE_COUNT_OUTPUT"
+          mise run test
+          test -s "$RUBIO_TEST_GATE_COUNT_OUTPUT"
+          test "$(cat "$RUBIO_TEST_GATE_COUNT_OUTPUT")" -gt 0
+          echo "tests_ran=true" >> "$GITHUB_OUTPUT"
+
+  aggregate:
+    name: test-gate
+    if: ${{ always() }}
+    needs: [canonical-tests]
+    runs-on: ${{ fromJSON(vars.RUNNERS || '{}').light || fromJSON('["ubuntu-latest"]') }}
+    timeout-minutes: 10
+    env:
+      NEEDS_JSON: ${{ toJSON(needs) }}
+    steps:
+      - name: Require successful non-empty test execution
+        run: >-
+          jq -e 'length > 0 and all(.[]; .result == "success" and
+          .outputs.tests_ran == "true")' <<<"$NEEDS_JSON"
