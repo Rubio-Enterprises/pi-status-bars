@@ -5,7 +5,7 @@ import {
   getAgentDir,
 } from '@earendil-works/pi-coding-agent';
 import { getCapabilities, type TUI } from '@earendil-works/pi-tui';
-import { ConfigStore, placement } from './config.ts';
+import { ConfigStore } from './config.ts';
 import { type LineName, PUBLISH_CHANNEL, type Publication, REQUEST_CHANNEL } from './contract.ts';
 import { layout } from './layout.ts';
 import { publisherKey, validate } from './validate.ts';
@@ -27,6 +27,8 @@ export default function statusBars(pi: ExtensionAPI) {
   let context: ExtensionContext | undefined;
   let timer: ReturnType<typeof setInterval> | undefined;
   let stopped = false;
+  let width = process.stdout.columns || 80;
+  let terminalUI: TUI | undefined;
   const config = new ConfigStore(join(getAgentDir(), 'status-bars.json'), (message) =>
     context?.ui.notify(message, 'warning'),
   );
@@ -44,6 +46,10 @@ export default function statusBars(pi: ExtensionAPI) {
       timer.unref();
     }
   }
+  function resize() {
+    width = terminalUI?.terminal.columns || process.stdout.columns || 80;
+    refresh();
+  }
   function refresh() {
     if (!context || stopped || context.mode !== 'tui') return;
     const overrides = config.read();
@@ -51,20 +57,15 @@ export default function statusBars(pi: ExtensionAPI) {
     for (const line of lines) {
       const visible =
         !visibility.hidden &&
-        all.some((segment) => {
-          const effective = placement(segment, overrides);
-          return (
-            effective.line === line &&
-            !effective.hidden &&
-            segment.forms.full.some((part) =>
-              'text' in part
-                ? !!part.text
-                : part.kind === 'diff'
-                  ? !!(part.additions || part.deletions)
-                  : true,
-            )
-          );
-        });
+        layout(
+          all,
+          overrides,
+          line,
+          width,
+          Date.now(),
+          context.ui.theme,
+          getCapabilities().hyperlinks,
+        ).rows.length > 0;
       if (!visible) {
         if (mounted.has(line)) context.ui.setWidget(`status-bars.${line}`, undefined);
         mounted.delete(line);
@@ -75,10 +76,13 @@ export default function statusBars(pi: ExtensionAPI) {
           `status-bars.${line}`,
           (tui, theme) => {
             mounted.set(line, tui);
+            terminalUI = tui;
             let previousConfig = overrides;
             return {
-              render(width) {
+              render(availableWidth) {
                 if (stopped || visibility.hidden) return [];
+                const resized = width !== availableWidth;
+                width = availableWidth;
                 const current = config.read();
                 const output = layout(
                   segments(),
@@ -91,8 +95,8 @@ export default function statusBars(pi: ExtensionAPI) {
                 );
                 countdowns.set(line, output.countdown);
                 clock();
-                // Reconcile placement changes discovered by the stat-cached render check.
-                if (current !== previousConfig) {
+                // Defer widget changes until Pi finishes traversing the current render tree
+                if (current !== previousConfig || resized || !output.rows.length) {
                   previousConfig = current;
                   queueMicrotask(refresh);
                 }
@@ -128,6 +132,8 @@ export default function statusBars(pi: ExtensionAPI) {
   pi.on('session_start', (_event, ctx) => {
     context = ctx;
     stopped = false;
+    process.stdout.removeListener('resize', resize);
+    if (ctx.mode === 'tui') process.stdout.on('resize', resize);
     publications.clear();
     warned.clear();
     config.resetWarnings();
@@ -142,6 +148,8 @@ export default function statusBars(pi: ExtensionAPI) {
   });
   pi.on('session_shutdown', (_event, ctx) => {
     stopped = true;
+    process.stdout.removeListener('resize', resize);
+    terminalUI = undefined;
     unsubscribe();
     stopClock();
     publications.clear();

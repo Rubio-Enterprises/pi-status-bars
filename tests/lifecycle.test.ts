@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
-import { PUBLISH_CHANNEL, REQUEST_CHANNEL } from '../src/contract.ts';
+import { type Part, PUBLISH_CHANNEL, REQUEST_CHANNEL } from '../src/contract.ts';
 import statusBars from '../src/index.ts';
 import { now, publication, segment, text } from './fixture.ts';
 import { uiFixture } from './ui-fixture.ts';
@@ -151,6 +151,31 @@ test('minimal countdown omission, dropped segment, hidden config and clear stop 
   h.publish(publication([]));
   expect(h.components.size).toBe(0);
 });
+test.each([
+  { name: 'detail-level omission', width: 1, full: [{ kind: 'countdown', at: now }] },
+  { name: 'elastic omission', width: 7, full: [{ kind: 'value', text: 'title', elastic: true }] },
+] satisfies Array<{ name: string; width: number; full: Part[] }>)(
+  'removes a line with no rendered content after $name',
+  async ({ width, full }) => {
+    const h = harness();
+    h.start();
+    const p = publication([segment('fake.omitted', { forms: { full } })]);
+    h.publish(p);
+    expect(h.render(width)).toEqual([]);
+    await Promise.resolve();
+    expect(h.components.has('status-bars.above')).toBe(false);
+    const renders = h.renders;
+    await Promise.resolve();
+    expect(h.renders).toBe(renders);
+    h.publish(p);
+    expect(h.components.has('status-bars.above')).toBe(false);
+    h.resize(80);
+    expect(h.components.has('status-bars.above')).toBe(true);
+    expect(h.render()).toHaveLength(1);
+    h.resize(width);
+    expect(h.components.has('status-bars.above')).toBe(false);
+  },
+);
 test('render checks config and moves lines; unchanged reads do not schedule render loops', async () => {
   const h = harness();
   h.start();
@@ -170,12 +195,14 @@ test('render checks config and moves lines; unchanged reads do not schedule rend
   expect(h.components.has('status-bars.above')).toBe(false);
   expect(h.placements.get('status-bars.below')).toBe('belowEditor');
   expect(h.render(10)).toEqual([{ key: 'status-bars.below', row: '     hello' }]);
+  await Promise.resolve();
   const before = h.renders;
   h.render();
   await Promise.resolve();
   expect(h.renders).toBe(before);
 });
 test('shutdown clears both lines, unsubscribes and stops clock idempotently', () => {
+  const resizeListeners = process.stdout.listenerCount('resize');
   const clears = spyOn(globalThis, 'clearInterval');
   disposals.push(() => clears.mockRestore());
   const h = harness();
@@ -190,6 +217,8 @@ test('shutdown clears both lines, unsubscribes and stops clock idempotently', ()
   const old = [...h.components.values()];
   h.stop();
   h.stop();
+  expect(process.stdout.listenerCount('resize')).toBe(resizeListeners);
+  h.resize(200);
   expect(h.components.size).toBe(0);
   expect(h.listeners.get(PUBLISH_CHANNEL)?.size).toBe(0);
   expect(clears).toHaveBeenCalledTimes(1);

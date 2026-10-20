@@ -7,13 +7,16 @@ export function uiFixture() {
   const warnings: string[] = [];
   const placements = new Map<string, string>();
   let renders = 0;
+  const terminal = { columns: 80 };
   const tui = {
+    terminal,
     requestRender() {
       renders++;
     },
   } as TUI;
   type Factory = (tui: TUI, theme: Theme) => Component;
   const ui = {
+    theme: plain,
     notify(message: string) {
       warnings.push(message);
     },
@@ -43,7 +46,12 @@ export function uiFixture() {
     get renders() {
       return renders;
     },
-    render(width = 80) {
+    resize(width: number) {
+      terminal.columns = width;
+      process.stdout.emit('resize');
+    },
+    render(width = terminal.columns) {
+      terminal.columns = width;
       return [...components.entries()].flatMap(([key, component]) =>
         component.render(width).map((row) => ({ key, row })),
       );
