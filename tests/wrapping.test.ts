@@ -186,6 +186,45 @@ test('markers pack with the last segment of their zone; empty zones use the last
     'CCC │ +1   +1',
   ]);
 });
+test.each(['empty', 'elastic'] as const)(
+  'an %s tail cannot anchor a marker away from displayed zone content',
+  (kind) => {
+    const config = parseConfig({ lines: { above: { maxRows: 2 } } }, () => {});
+    const segments = [
+      segment('keep.a', {
+        order: 1,
+        priority: 100,
+        forms: { full: [text('LEFTLEFT')], compact: [text('L')] },
+      }),
+      segment('drop.a', {
+        order: 3,
+        priority: 0,
+        forms: { full: [text('X'.repeat(100))] },
+      }),
+      segment('right.a', {
+        order: 4,
+        zone: 'right',
+        priority: 100,
+        forms: { full: [text('RIGHT')] },
+      }),
+    ];
+    const expected = layout(segments, config, 'above', 10, now, plain);
+    expect(expected.rows).toEqual(['L │ +1', '     RIGHT']);
+    const tail = segment('tail.a', {
+      order: 2,
+      priority: 100,
+      forms: {
+        full:
+          kind === 'empty' ? [] : [{ kind: 'value', text: 'long title goes here', elastic: true }],
+      },
+    });
+    const result = layout([...segments, tail], config, 'above', 10, now, plain);
+    expect(result.rows).toEqual(expected.rows);
+    expect(result.dropped).toEqual(expected.dropped);
+    expect(result.levels.keep).toEqual(expected.levels.keep);
+  },
+);
+
 test('elastic expands on its own row only after greedy packing', () => {
   const config = parseConfig({ lines: { above: { maxRows: 2 } } }, () => {});
   const segments = [

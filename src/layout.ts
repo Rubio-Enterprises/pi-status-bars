@@ -34,6 +34,7 @@ interface Entry {
 interface Rendered extends Entry {
   parts: Array<{ part: Part; text: string }>;
   text: string;
+  displayedWidth: number;
   measuredWidth: number;
 }
 interface Row {
@@ -138,15 +139,23 @@ export function layout(
         text: part.kind === 'countdown' ? ' '.repeat(countdownWidths[level]) : text,
       })),
     );
-    const rendered = { ...entry, parts, text, measuredWidth: visibleWidth(measured) };
+    const rendered = {
+      ...entry,
+      parts,
+      text,
+      displayedWidth: visibleWidth(text),
+      measuredWidth: visibleWidth(measured),
+    };
     cached[level] = rendered;
     return rendered;
   }
 
   function pack(rendered: Rendered[]): Row[] {
+    const displayed = rendered.filter((entry) => entry.displayedWidth > 0);
+    const final = displayed.at(-1) ?? rendered.at(-1);
     const tails = {
-      left: rendered.filter((entry) => entry.place.zone === 'left').at(-1) ?? rendered.at(-1),
-      right: rendered.filter((entry) => entry.place.zone === 'right').at(-1) ?? rendered.at(-1),
+      left: displayed.filter((entry) => entry.place.zone === 'left').at(-1) ?? final,
+      right: displayed.filter((entry) => entry.place.zone === 'right').at(-1) ?? final,
     };
     const rows: Row[] = [];
     for (const entry of rendered) {
