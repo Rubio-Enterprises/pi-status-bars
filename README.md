@@ -142,7 +142,8 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
   A lone oversized segment finally truncates with `…`.
 - Default below-line drop order is exposure, gemini, chatgpt, claude (publisher priorities).
 - Semantic styling uses Pi theme roles. Meters have six cells and disappear below compact;
-  countdowns use full/compact durations, terse largest units, and disappear at minimal.
+  countdowns use the `dim` theme colour, full/compact durations, terse largest units,
+  and disappear at minimal.
 - One unreferenced 30-second clock runs only while rendered countdowns are visible.
   Hidden/dropped/minimal countdowns do not keep it alive.
 - Reload and shutdown clear both lines, timers and subscriptions. No footer/header/status mutations.

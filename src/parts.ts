@@ -58,7 +58,7 @@ export function renderPart(
       const duration = countdown(part.at, now);
       const shown =
         level === 'terse' ? (duration.match(/^\d+[dhm]|^now/)?.[0] ?? duration) : duration;
-      return theme.fg('muted', `↻${level === 'full' ? ' ' : ''}${shown}`);
+      return theme.fg('dim', `↻${level === 'full' ? ' ' : ''}${shown}`);
     }
     case 'diff':
       return part.additions || part.deletions
