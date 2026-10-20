@@ -157,6 +157,48 @@ test.each([
   },
 );
 
+test.each(['warn', 'critical'] as const)(
+  'backfill restores suppressed %s counts when a restored segment frees marker space',
+  (status) => {
+    const segments = [
+      segment('keep.a', {
+        priority: 100,
+        order: 1,
+        forms: { full: [text('K'.repeat(100))], compact: [text('K')] },
+      }),
+      segment('drop.a', {
+        priority: 10,
+        order: 2,
+        forms: { full: [{ kind: 'value', text: 'W'.repeat(100), status }] },
+      }),
+      segment('right.a', {
+        zone: 'right',
+        priority: 0,
+        order: 3,
+        forms: {
+          full: [{ kind: 'value', text: 'C'.repeat(100), status: 'critical' }],
+          minimal: [text('R')],
+        },
+      }),
+    ];
+    expect(layout(segments, new Map(), 'above', 16, now, plain)).toMatchObject({
+      rows: ['K │ +1 ●1      R'],
+      dropped: ['drop.a'],
+    });
+    expect(layout(segments, new Map(), 'above', 12, now, plain)).toMatchObject({
+      rows: ['K │ +1     R'],
+      dropped: ['drop.a'],
+    });
+    const right = segments[2];
+    if (!right) throw new Error('Missing right segment');
+    right.forms.minimal = [];
+    expect(layout(segments, new Map(), 'above', 11, now, plain)).toMatchObject({
+      rows: ['K │ +1 ●1'],
+      dropped: ['drop.a'],
+    });
+  },
+);
+
 test('backfill is deterministic across repeated renders and publication arrival order', () => {
   for (const width of [167, 90, 60, 45, 20]) {
     const segments = realisticUsage();

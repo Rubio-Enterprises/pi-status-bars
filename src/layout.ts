@@ -277,6 +277,16 @@ export function layout(
         }
       }
     } while (accepted);
+
+    for (const status of ['critical', 'warn'] as const) {
+      if (status === 'critical' ? showCritical : showWarn) continue;
+      if (status === 'critical') showCritical = true;
+      else showWarn = true;
+      const trial = repack();
+      if (fits(trial)) packed = trial;
+      else if (status === 'critical') showCritical = false;
+      else showWarn = false;
+    }
   }
 
   let elasticAssigned = false;
