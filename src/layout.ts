@@ -32,11 +32,15 @@ interface Entry {
   group: string;
 }
 interface Rendered extends Entry {
-  parts: Array<{ part: Part; text: string; measured: string }>;
+  parts: Array<{ part: Part; text: string }>;
+  text: string;
+  measuredWidth: number;
 }
 interface Row {
   entries: Rendered[];
-  markers: Partial<Record<ZoneName, string>>;
+  markers: Partial<Record<ZoneName, number>>;
+  widths: Record<ZoneName, number>;
+  size: number;
 }
 type Counts = Record<ZoneName, { total: number; critical: number; warn: number }>;
 const countdownWidths = { full: 8, compact: 7, terse: 4, minimal: 0 };
@@ -96,20 +100,13 @@ export function layout(
     return text;
   }
 
-  function compose(row: Row, measured: boolean, pad: boolean): string {
+  function compose(row: Row, pad: boolean): string {
     const zoneText = (zone: ZoneName) => {
       const texts = row.entries
         .filter((entry) => entry.place.zone === zone)
-        .map((entry) =>
-          joinParts(
-            entry.parts.map(({ part, text, measured: reserved }) => ({
-              part,
-              text: measured ? reserved : text,
-            })),
-          ),
-        )
+        .map((entry) => entry.text)
         .filter(Boolean);
-      if (row.markers[zone]) texts.push(row.markers[zone]);
+      if (row.markers[zone]) texts.push(marker(zone));
       return texts.join(separator);
     };
     const left = zoneText('left'),
@@ -119,22 +116,34 @@ export function layout(
     return right ? (pad ? ' '.repeat(Math.max(0, width - used)) : '') + right : left;
   }
 
-  function pack(): Row[] {
-    const rendered: Rendered[] = remaining.map((entry) => {
-      const level = levels[entry.group] ?? 'full';
-      return {
-        ...entry,
-        parts: form(entry.segment, level).map((part) => {
-          const elastic = 'elastic' in part && part.elastic;
-          const text = elastic ? '' : renderPart(part, level, now, theme, hyperlinks);
-          return {
-            part,
-            text,
-            measured: part.kind === 'countdown' ? ' '.repeat(countdownWidths[level]) : text,
-          };
-        }),
-      };
-    });
+  const renderedForms = new Map<Entry, Partial<Record<DetailLevel, Rendered>>>();
+  function renderedForm(entry: Entry): Rendered {
+    const level = levels[entry.group] ?? 'full';
+    let cached = renderedForms.get(entry);
+    if (!cached) {
+      cached = {};
+      renderedForms.set(entry, cached);
+    }
+    const existing = cached[level];
+    if (existing) return existing;
+    const parts = form(entry.segment, level).map((part) => ({
+      part,
+      text:
+        'elastic' in part && part.elastic ? '' : renderPart(part, level, now, theme, hyperlinks),
+    }));
+    const text = joinParts(parts);
+    const measured = joinParts(
+      parts.map(({ part, text }) => ({
+        part,
+        text: part.kind === 'countdown' ? ' '.repeat(countdownWidths[level]) : text,
+      })),
+    );
+    const rendered = { ...entry, parts, text, measuredWidth: visibleWidth(measured) };
+    cached[level] = rendered;
+    return rendered;
+  }
+
+  function pack(rendered: Rendered[]): Row[] {
     const tails = {
       left: rendered.filter((entry) => entry.place.zone === 'left').at(-1) ?? rendered.at(-1),
       right: rendered.filter((entry) => entry.place.zone === 'right').at(-1) ?? rendered.at(-1),
@@ -143,30 +152,46 @@ export function layout(
     for (const entry of rendered) {
       const markers: Row['markers'] = {};
       for (const zone of ['left', 'right'] as const) {
-        if (entry === tails[zone] && counts[zone].total) markers[zone] = marker(zone);
+        const count = counts[zone];
+        if (entry !== tails[zone] || !count.total) continue;
+        markers[zone] =
+          1 +
+          String(count.total).length +
+          (showCritical && count.critical ? 2 + String(count.critical).length : 0) +
+          (showWarn && count.warn ? 2 + String(count.warn).length : 0);
       }
       let row = rows.at(-1);
       if (!row) {
-        row = { entries: [], markers: {} };
+        row = { entries: [], markers: {}, widths: { left: 0, right: 0 }, size: 0 };
         rows.push(row);
       }
-      const trial: Row = {
-        entries: [...row.entries, entry],
-        markers: { ...row.markers, ...markers },
-      };
-      if (row.entries.length && visibleWidth(compose(trial, true, false)) > width) {
-        rows.push({ entries: [entry], markers });
-      } else {
-        row.entries.push(entry);
-        Object.assign(row.markers, markers);
+      function append(target: Row): Record<ZoneName, number> {
+        const widths = { ...target.widths };
+        const zone = entry.place.zone;
+        if (entry.measuredWidth) widths[zone] += (widths[zone] ? 3 : 0) + entry.measuredWidth;
+        for (const zone of ['left', 'right'] as const) {
+          const markerWidth = markers[zone];
+          if (markerWidth) widths[zone] += (widths[zone] ? 3 : 0) + markerWidth;
+        }
+        return widths;
       }
+      let widths = append(row);
+      if (row.entries.length && rowWidth(widths) > width) {
+        row = { entries: [], markers: {}, widths: { left: 0, right: 0 }, size: 0 };
+        rows.push(row);
+        widths = append(row);
+      }
+      row.entries.push(entry);
+      Object.assign(row.markers, markers);
+      row.widths = widths;
+      row.size = rowWidth(widths);
     }
     return rows;
   }
 
-  const fits = (rows: Row[]) =>
-    rows.length <= cap && rows.every((row) => visibleWidth(compose(row, true, false)) <= width);
-  let packed = pack();
+  const repack = () => pack(remaining.map(renderedForm));
+  const fits = (rows: Row[]) => rows.length <= cap && rows.every((row) => row.size <= width);
+  let packed = repack();
   while (!fits(packed)) {
     const groups = new Map<string, number>();
     for (const entry of remaining)
@@ -193,15 +218,15 @@ export function layout(
       if (status) count[status]++;
       remaining = remaining.filter((entry) => entry !== victim);
     } else break;
-    packed = pack();
+    packed = repack();
   }
   if (!fits(packed)) {
     showWarn = false;
-    packed = pack();
+    packed = repack();
   }
   if (!fits(packed)) {
     showCritical = false;
-    packed = pack();
+    packed = repack();
   }
 
   if (fits(packed)) {
@@ -235,7 +260,7 @@ export function layout(
         } else {
           levels[group] = DETAIL_LEVELS[DETAIL_LEVELS.indexOf(level) - 1] ?? 'full';
         }
-        const trial = pack();
+        const trial = repack();
         if (fits(trial)) {
           packed = trial;
           accepted = true;
@@ -264,15 +289,16 @@ export function layout(
           if (!('elastic' in part.part && part.part.elastic) || elasticAssigned) continue;
           elasticAssigned = true;
           const level = levels[entry.group] ?? 'full';
-          const without = visibleWidth(compose(row, false, false));
+          const without = visibleWidth(compose(row, false));
           part.text = renderPart(part.part, level, now, theme, hyperlinks, 8);
-          const overhead =
-            visibleWidth(compose(row, false, false)) - without - visibleWidth(part.text);
+          entry.text = joinParts(entry.parts);
+          const overhead = visibleWidth(compose(row, false)) - without - visibleWidth(part.text);
           const room = width - without - overhead;
           part.text = room >= 8 ? renderPart(part.part, level, now, theme, hyperlinks, room) : '';
+          entry.text = joinParts(entry.parts);
         }
       }
-      const natural = compose(row, false, true);
+      const natural = compose(row, true);
       const text = truncateToWidth(natural, width, '…');
       countdown ||= row.entries.some((entry) =>
         entry.parts.some((part) => {
@@ -288,6 +314,10 @@ export function layout(
     })
     .filter(Boolean);
   return { rows, levels, dropped, countdown };
+}
+
+function rowWidth(widths: Record<ZoneName, number>): number {
+  return widths.left + widths.right + (widths.left && widths.right ? 3 : 0);
 }
 
 function overflowStatus(segment: Segment): 'critical' | 'warn' | undefined {
