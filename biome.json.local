@@ -1,0 +1,8 @@
+{
+  "overrides": [
+    {
+      "includes": ["src/contract.ts"],
+      "formatter": { "lineWidth": 120 }
+    }
+  ]
+}

@@ -17,10 +17,14 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
-
       "suspicious": {
         "noExplicitAny": "error",
-        "noConsole": { "level": "warn", "options": { "allow": ["warn", "error"] } },
+        "noConsole": {
+          "level": "warn",
+          "options": {
+            "allow": ["warn", "error"]
+          }
+        },
         "noEmptyBlock": "error"
       },
       "style": {
@@ -59,13 +63,26 @@
       }
     }
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
-
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always",
       "trailingCommas": "all"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/contract.ts"],
+      "formatter": {
+        "lineWidth": 120
+      }
+    }
+  ]
 }
