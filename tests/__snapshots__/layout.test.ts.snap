@@ -212,3 +212,157 @@ exports[`golden below width 20 1`] = `
   ],
 }
 `;
+
+exports[`golden overflow statuses width 200 1`] = `
+{
+  "countdown": false,
+  "dropped": [],
+  "level": "full",
+  "rows": [
+    " #123 Unify semantic status segments across all publish… +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ● │ #200 ● │ #201 ● │ #202 ● │ #203 ● │ #204 ● │ #205 ● │ #206 ● │ #207 ● │ #208 ● │ #209 ● │ #210 ●",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 160 1`] = `
+{
+  "countdown": false,
+  "dropped": [],
+  "level": "full",
+  "rows": [
+    " #123 Unify sem… +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ● │ #200 ● │ #201 ● │ #202 ● │ #203 ● │ #204 ● │ #205 ● │ #206 ● │ #207 ● │ #208 ● │ #209 ● │ #210 ●",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 130 1`] = `
+{
+  "countdown": false,
+  "dropped": [],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ #205 │ #206 │ #207 │ #208 │ #209 │ #210",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 110 1`] = `
+{
+  "countdown": false,
+  "dropped": [
+    "pr.hidden-10",
+    "pr.hidden-9",
+  ],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ #205 │ #206 │ #207 │ #208 │ +2 ●1 ●1",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 90 1`] = `
+{
+  "countdown": false,
+  "dropped": [
+    "pr.hidden-10",
+    "pr.hidden-9",
+    "pr.hidden-8",
+    "pr.hidden-7",
+    "pr.hidden-6",
+  ],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ #205 │ +5 ●3 ●2",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 80 1`] = `
+{
+  "countdown": false,
+  "dropped": [
+    "pr.hidden-10",
+    "pr.hidden-9",
+    "pr.hidden-8",
+    "pr.hidden-7",
+    "pr.hidden-6",
+    "pr.hidden-5",
+  ],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ +6 ●3 ●3",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 60 1`] = `
+{
+  "countdown": false,
+  "dropped": [
+    "pr.hidden-10",
+    "pr.hidden-9",
+    "pr.hidden-8",
+    "pr.hidden-7",
+    "pr.hidden-6",
+    "pr.hidden-5",
+    "pr.hidden-4",
+    "pr.hidden-3",
+    "pr.hidden-2",
+  ],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ +9 ●5 ●4",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 45 1`] = `
+{
+  "countdown": false,
+  "dropped": [
+    "pr.hidden-10",
+    "pr.hidden-9",
+    "pr.hidden-8",
+    "pr.hidden-7",
+    "pr.hidden-6",
+    "pr.hidden-5",
+    "pr.hidden-4",
+    "pr.hidden-3",
+    "pr.hidden-2",
+    "pr.hidden-1",
+    "pr.hidden-0",
+    "pr.extra-4",
+  ],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ #124 │ #125 │ #126 │ +12 ●6 ●5",
+  ],
+}
+`;
+
+exports[`golden overflow statuses width 20 1`] = `
+{
+  "countdown": false,
+  "dropped": [
+    "pr.hidden-10",
+    "pr.hidden-9",
+    "pr.hidden-8",
+    "pr.hidden-7",
+    "pr.hidden-6",
+    "pr.hidden-5",
+    "pr.hidden-4",
+    "pr.hidden-3",
+    "pr.hidden-2",
+    "pr.hidden-1",
+    "pr.hidden-0",
+    "pr.extra-4",
+    "pr.extra-3",
+    "pr.extra-2",
+    "pr.extra-1",
+  ],
+  "level": "minimal",
+  "rows": [
+    "#123 ● │ +15 ●6 ●5",
+  ],
+}
+`;

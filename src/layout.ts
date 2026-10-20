@@ -47,7 +47,12 @@ export function layout(
     .filter(({ place }) => place.line === line && !place.hidden)
     .sort((a, b) => a.place.order - b.place.order || compare(a.segment.id, b.segment.id));
   const dropped: string[] = [];
-  const counts = { left: 0, right: 0 };
+  const counts = {
+    left: { total: 0, critical: 0, warn: 0 },
+    right: { total: 0, critical: 0, warn: 0 },
+  };
+  let showWarn = true;
+  let showCritical = true;
   let remaining = collected;
   let level: DetailLevel = 'full';
   let last: { text: string; countdown: boolean } = { text: '', countdown: false };
@@ -77,7 +82,22 @@ export function layout(
         .filter((entry) => entry.place.zone === zone)
         .map((entry) => joinParts(entry.parts))
         .filter(Boolean);
-      if (counts[zone]) texts.push(theme.fg('dim', `+${counts[zone]}`));
+      const count = counts[zone];
+      if (count.total) {
+        let marker = theme.fg('dim', `+${count.total}`);
+        for (const status of ['critical', 'warn'] as const) {
+          if (count[status] && (status === 'critical' ? showCritical : showWarn)) {
+            marker += ` ${renderPart(
+              { kind: 'value', text: `●${count[status]}`, status },
+              level,
+              now,
+              theme,
+              false,
+            )}`;
+          }
+        }
+        texts.push(marker);
+      }
       return texts.join(theme.fg('dim', ' │ '));
     };
     const compose = (pad: boolean) => {
@@ -118,17 +138,35 @@ export function layout(
     )[0];
     if (!victim) break;
     dropped.push(victim.segment.id);
-    counts[victim.place.zone]++;
+    const count = counts[victim.place.zone];
+    count.total++;
+    const status = overflowStatus(victim.segment);
+    if (status) count[status]++;
     remaining = remaining.filter((entry) => entry !== victim);
     last = render();
     if (visibleWidth(last.text) <= width) return result();
   }
+  showWarn = false;
+  last = render();
+  if (visibleWidth(last.text) <= width) return result();
+  showCritical = false;
+  last = render();
   return result();
 
   function result(): LayoutResult {
     const text = truncateToWidth(last.text, width, '…');
     return { rows: text ? [text] : [], level, dropped, countdown: last.countdown };
   }
+}
+
+function overflowStatus(segment: Segment): 'critical' | 'warn' | undefined {
+  let status: 'warn' | undefined;
+  for (const part of segment.forms.full) {
+    if (part.kind !== 'value' && part.kind !== 'meter') continue;
+    if (part.status === 'critical') return 'critical';
+    if (part.status === 'warn') status = 'warn';
+  }
+  return status;
 }
 
 function compare(a: string, b: string): number {

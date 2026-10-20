@@ -136,7 +136,10 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
 - One elastic part takes leftover width, truncating with `…`; fewer than eight columns omits it.
   If multiple publishers nominate one, only the first in left-zone/right-zone order receives space.
 - At minimal detail, lowest priority drops first; ties drop later order, then lexically later ID.
-  Each zone appends a dim `+N` count. A lone oversized segment finally truncates with `…`.
+  Each zone appends dim `+N`, then themed `●<critical count> ●<warn count>` for dropped segments,
+  using each segment's most severe full-form value/meter status and omitting zero counts.
+  After segment dropping, warn counts shrink away before critical counts, then plain `+N` remains.
+  A lone oversized segment finally truncates with `…`.
 - Default below-line drop order is exposure, gemini, chatgpt, claude (publisher priorities).
 - Semantic styling uses Pi theme roles. Meters have six cells and disappear below compact;
   countdowns use full/compact durations, terse largest units, and disappear at minimal.
