@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.1.0...v1.1.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* render reset countdowns with the dim theme colour ([#6](https://github.com/Rubio-Enterprises/pi-status-bars/issues/6)) ([192e98e](https://github.com/Rubio-Enterprises/pi-status-bars/commit/192e98e1582b23f5e60a898664d59dbde9ae4482))
+
 ## [1.1.0](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.0.0...v1.1.0) (2026-10-20)
 
 
