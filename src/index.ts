@@ -10,7 +10,12 @@ import { type LineName, PUBLISH_CHANNEL, type Publication, REQUEST_CHANNEL } fro
 import { layout } from './layout.ts';
 import { publisherKey, validate } from './validate.ts';
 
-let hidden = false;
+const visibilityKey = Symbol.for('pi-status-bars.visibility');
+const processState = globalThis as typeof globalThis & {
+  [visibilityKey]?: { hidden: boolean };
+};
+processState[visibilityKey] ??= { hidden: false };
+const visibility = processState[visibilityKey];
 const lines = ['above', 'below'] as const;
 
 export default function statusBars(pi: ExtensionAPI) {
@@ -32,7 +37,7 @@ export default function statusBars(pi: ExtensionAPI) {
     timer = undefined;
   }
   function clock() {
-    const needed = !hidden && [...countdowns.values()].some(Boolean);
+    const needed = !visibility.hidden && [...countdowns.values()].some(Boolean);
     if (!needed) stopClock();
     else if (!timer) {
       timer = setInterval(refresh, 30_000);
@@ -45,7 +50,7 @@ export default function statusBars(pi: ExtensionAPI) {
     const all = segments();
     for (const line of lines) {
       const visible =
-        !hidden &&
+        !visibility.hidden &&
         all.some((segment) => {
           const effective = placement(segment, overrides);
           return (
@@ -73,7 +78,7 @@ export default function statusBars(pi: ExtensionAPI) {
             let previousConfig = overrides;
             return {
               render(width) {
-                if (stopped || hidden) return [];
+                if (stopped || visibility.hidden) return [];
                 const current = config.read();
                 const output = layout(
                   segments(),
@@ -148,7 +153,7 @@ export default function statusBars(pi: ExtensionAPI) {
   pi.registerShortcut('alt+u', {
     description: 'Show or hide all status bar lines',
     handler: async () => {
-      hidden = !hidden;
+      visibility.hidden = !visibility.hidden;
       countdowns.clear();
       refresh();
     },

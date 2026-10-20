@@ -2,6 +2,7 @@ import { afterEach, expect, spyOn, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { fauxProvider, InMemoryCredentialStore } from '@earendil-works/pi-ai';
 import {
   createAgentSession,
@@ -25,7 +26,11 @@ afterEach(() => {
   else process.env.PI_CODING_AGENT_DIR = previous;
 });
 
-async function harness(rendererFirst: boolean, initial: Publication = publication()) {
+async function harness(
+  rendererFirst: boolean,
+  initial: Publication = publication(),
+  rendererFromFile = false,
+) {
   const root = mkdtempSync(join(tmpdir(), 'status-sdk-'));
   disposals.push(() => rmSync(root, { recursive: true, force: true }));
   const cwd = join(root, 'workspace'),
@@ -71,7 +76,14 @@ async function harness(rendererFirst: boolean, initial: Publication = publicatio
     noPromptTemplates: true,
     noThemes: true,
     noContextFiles: true,
-    extensionFactories: rendererFirst ? [statusBars, publisher] : [publisher, statusBars],
+    additionalExtensionPaths: rendererFromFile
+      ? [fileURLToPath(new URL('../src/index.ts', import.meta.url))]
+      : [],
+    extensionFactories: rendererFromFile
+      ? [publisher]
+      : rendererFirst
+        ? [statusBars, publisher]
+        : [publisher, statusBars],
   });
   await loader.reload();
   expect(loader.getExtensions().errors).toEqual([]);
@@ -212,14 +224,25 @@ test('SDK shutdown clears both lines, clock and subscriptions; later events cann
   expect(old.flatMap((component) => component.render(80))).toEqual([]);
   expect(h.errors).toEqual([]);
 });
-test('SDK shortcut hides all lines through reload and restores latest publication', async () => {
-  const h = await harness(false);
-  await h.toggle();
-  expect(h.components.size).toBe(0);
-  h.publish(publication([segment('fake.latest', { forms: { full: [text('latest')] } })]));
-  await h.session.reload();
-  expect(h.components.size).toBe(0);
-  await h.toggle();
-  expect(h.render()).toEqual([{ key: 'status-bars.above', row: 'latest' }]);
-  await h.shutdown();
-});
+test.each([false, true])(
+  'SDK shortcut stays hidden through reload and restores latest publication (file renderer: %s)',
+  async (rendererFromFile) => {
+    const h = await harness(false, publication(), rendererFromFile);
+    expect(h.render()).toEqual([{ key: 'status-bars.above', row: 'hello' }]);
+    await h.toggle();
+    try {
+      expect(h.components.size).toBe(0);
+      h.publish(publication([segment('fake.latest', { forms: { full: [text('latest')] } })]));
+      await h.session.reload();
+      expect(h.loads).toBe(2);
+      expect(h.requests).toBe(2);
+      expect(h.components.size).toBe(0);
+      expect(h.render()).toEqual([]);
+    } finally {
+      await h.toggle();
+    }
+    expect(h.render()).toEqual([{ key: 'status-bars.above', row: 'latest' }]);
+    expect(h.errors).toEqual([]);
+    await h.shutdown();
+  },
+);
