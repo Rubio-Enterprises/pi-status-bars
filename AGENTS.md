@@ -20,8 +20,9 @@ Invariants:
   and restrict OSC 8 links to HTTP(S). Store semantic parts, not themed strings.
 - The contract is frozen for v1. Publishers compile against its exported types in parallel;
   contract changes require coordinated approval.
-- Shrink every segment on a line in lockstep, then drop by priority with zone-local counts.
-  Measure visible terminal columns and keep the final output to one row.
+- Greedily wrap within each line's row cap before degrading publisher groups in priority order.
+  Keep each group in lockstep; exhaust it before the next. Measure countdowns at fixed widths,
+  keep zone-local overflow counts, and bound every row by visible terminal columns.
 - Only one elastic part gets width, and only one unref clock runs for visible countdowns.
 - Register bus listeners in the factory; session start clears state then requests publications.
   Shutdown is idempotent and releases both lines, the clock and the publication subscription.

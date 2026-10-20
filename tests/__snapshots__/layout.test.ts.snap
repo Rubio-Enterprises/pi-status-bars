@@ -4,7 +4,9 @@ exports[`golden above width 200 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segments across all publishers +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -15,9 +17,13 @@ exports[`golden below width 200 1`] = `
 {
   "countdown": true,
   "dropped": [],
-  "level": "compact",
+  "levels": {
+    "exposure": "full",
+    "usage": "full",
+  },
   "rows": [
-    "claude 5h ╺━━──╴ 42% ↻2h18m | week ╺━━──╴ 42% ↻1d3h │ chatgpt 5h ╺━━──╴ 42% ↻2h18m | week ╺━━──╴ 42% ↻1d3h │ gemini day ╺━━──╴ 42% ↻2h18m | week ╺━━──╴ 42% ↻1d3h                    ⊘ 2 tools · 1 skill",
+    "claude 5h ╺━━──╴ 42% used ↻ 2h18m | week ╺━━──╴ 42% used ↻ 1d3h │ chatgpt 5h ╺━━──╴ 42% used ↻ 2h18m | week ╺━━──╴ 42% used ↻ 1d3h",
+    "gemini day ╺━━──╴ 42% used ↻ 2h18m | week ╺━━──╴ 42% used ↻ 1d3h                                                                                                   exposure 2 tools off · 1 skill hidden",
   ],
 }
 `;
@@ -26,7 +32,9 @@ exports[`golden above width 160 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segments across all publishers +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -37,9 +45,13 @@ exports[`golden below width 160 1`] = `
 {
   "countdown": true,
   "dropped": [],
-  "level": "terse",
+  "levels": {
+    "exposure": "full",
+    "usage": "full",
+  },
   "rows": [
-    "claude 5h 42% ↻2h | week 42% ↻1d │ chatgpt 5h 42% ↻2h | week 42% ↻1d │ gemini day 42% ↻2h | week 42% ↻1d                                                 ⊘ 2t 1s",
+    "claude 5h ╺━━──╴ 42% used ↻ 2h18m | week ╺━━──╴ 42% used ↻ 1d3h │ chatgpt 5h ╺━━──╴ 42% used ↻ 2h18m | week ╺━━──╴ 42% used ↻ 1d3h",
+    "gemini day ╺━━──╴ 42% used ↻ 2h18m | week ╺━━──╴ 42% used ↻ 1d3h                                                           exposure 2 tools off · 1 skill hidden",
   ],
 }
 `;
@@ -48,7 +60,9 @@ exports[`golden above width 130 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segments across all publishers +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -58,10 +72,16 @@ exports[`golden above width 130 1`] = `
 exports[`golden below width 130 1`] = `
 {
   "countdown": true,
-  "dropped": [],
-  "level": "terse",
+  "dropped": [
+    "exposure.summary",
+  ],
+  "levels": {
+    "exposure": "minimal",
+    "usage": "compact",
+  },
   "rows": [
-    "claude 5h 42% ↻2h | week 42% ↻1d │ chatgpt 5h 42% ↻2h | week 42% ↻1d │ gemini day 42% ↻2h | week 42% ↻1d                   ⊘ 2t 1s",
+    "claude 5h ╺━━──╴ 42% ↻2h18m | week ╺━━──╴ 42% ↻1d3h │ chatgpt 5h ╺━━──╴ 42% ↻2h18m | week ╺━━──╴ 42% ↻1d3h",
+    "gemini day ╺━━──╴ 42% ↻2h18m | week ╺━━──╴ 42% ↻1d3h                                                                            +1",
   ],
 }
 `;
@@ -70,7 +90,9 @@ exports[`golden above width 110 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segments across all publishers +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -79,11 +101,17 @@ exports[`golden above width 110 1`] = `
 
 exports[`golden below width 110 1`] = `
 {
-  "countdown": false,
-  "dropped": [],
-  "level": "minimal",
+  "countdown": true,
+  "dropped": [
+    "exposure.summary",
+  ],
+  "levels": {
+    "exposure": "minimal",
+    "usage": "terse",
+  },
   "rows": [
-    "cl 5h 42% | week 42% │ gpt 5h 42% | week 42% │ gem day 42% | week 42%                                       ⊘3",
+    "claude 5h 42% ↻2h | week 42% ↻1d │ chatgpt 5h 42% ↻2h | week 42% ↻1d",
+    "gemini day 42% ↻2h | week 42% ↻1d                                                                           +1",
   ],
 }
 `;
@@ -92,7 +120,9 @@ exports[`golden above width 90 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segments across … +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -101,11 +131,17 @@ exports[`golden above width 90 1`] = `
 
 exports[`golden below width 90 1`] = `
 {
-  "countdown": false,
-  "dropped": [],
-  "level": "minimal",
+  "countdown": true,
+  "dropped": [
+    "exposure.summary",
+  ],
+  "levels": {
+    "exposure": "minimal",
+    "usage": "terse",
+  },
   "rows": [
-    "cl 5h 42% | week 42% │ gpt 5h 42% | week 42% │ gem day 42% | week 42%                   ⊘3",
+    "claude 5h 42% ↻2h | week 42% ↻1d │ chatgpt 5h 42% ↻2h | week 42% ↻1d",
+    "gemini day 42% ↻2h | week 42% ↻1d                                                       +1",
   ],
 }
 `;
@@ -114,7 +150,9 @@ exports[`golden above width 80 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segmen… +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -123,11 +161,17 @@ exports[`golden above width 80 1`] = `
 
 exports[`golden below width 80 1`] = `
 {
-  "countdown": false,
-  "dropped": [],
-  "level": "minimal",
+  "countdown": true,
+  "dropped": [
+    "exposure.summary",
+  ],
+  "levels": {
+    "exposure": "minimal",
+    "usage": "terse",
+  },
   "rows": [
-    "cl 5h 42% | week 42% │ gpt 5h 42% | week 42% │ gem day 42% | week 42%         ⊘3",
+    "claude 5h 42% ↻2h | week 42% ↻1d │ chatgpt 5h 42% ↻2h | week 42% ↻1d",
+    "gemini day 42% ↻2h | week 42% ↻1d                                             +1",
   ],
 }
 `;
@@ -136,7 +180,9 @@ exports[`golden above width 60 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify se… +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ●",
   ],
@@ -148,11 +194,14 @@ exports[`golden below width 60 1`] = `
   "countdown": false,
   "dropped": [
     "exposure.summary",
-    "usage.gemini",
   ],
-  "level": "minimal",
+  "levels": {
+    "exposure": "minimal",
+    "usage": "minimal",
+  },
   "rows": [
-    "cl 5h 42% | week 42% │ gpt 5h 42% | week 42% │ +1         +1",
+    "cl 5h 42% | week 42% │ gpt 5h 42% | week 42%",
+    "gem day 42% | week 42%                                    +1",
   ],
 }
 `;
@@ -161,7 +210,9 @@ exports[`golden above width 45 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ #127",
   ],
@@ -173,12 +224,14 @@ exports[`golden below width 45 1`] = `
   "countdown": false,
   "dropped": [
     "exposure.summary",
-    "usage.gemini",
-    "usage.chatgpt",
   ],
-  "level": "minimal",
+  "levels": {
+    "exposure": "minimal",
+    "usage": "minimal",
+  },
   "rows": [
-    "cl 5h 42% | week 42% │ +2                  +1",
+    "cl 5h 42% | week 42% │ gpt 5h 42% | week 42%",
+    "gem day 42% | week 42%                     +1",
   ],
 }
 `;
@@ -191,7 +244,9 @@ exports[`golden above width 20 1`] = `
     "pr.extra-3",
     "pr.extra-2",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ +3",
   ],
@@ -206,7 +261,10 @@ exports[`golden below width 20 1`] = `
     "usage.gemini",
     "usage.chatgpt",
   ],
-  "level": "minimal",
+  "levels": {
+    "exposure": "minimal",
+    "usage": "minimal",
+  },
   "rows": [
     "cl 5h 42% | week 42…",
   ],
@@ -217,7 +275,9 @@ exports[`golden overflow statuses width 200 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify semantic status segments across all publish… +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ● │ #200 ● │ #201 ● │ #202 ● │ #203 ● │ #204 ● │ #205 ● │ #206 ● │ #207 ● │ #208 ● │ #209 ● │ #210 ●",
   ],
@@ -228,7 +288,9 @@ exports[`golden overflow statuses width 160 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "full",
+  "levels": {
+    "pr": "full",
+  },
   "rows": [
     " #123 Unify sem… +42-8 ● │ #124 ● │ #125 ● │ #126 ● │ #127 ● │ #200 ● │ #201 ● │ #202 ● │ #203 ● │ #204 ● │ #205 ● │ #206 ● │ #207 ● │ #208 ● │ #209 ● │ #210 ●",
   ],
@@ -239,7 +301,9 @@ exports[`golden overflow statuses width 130 1`] = `
 {
   "countdown": false,
   "dropped": [],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ #205 │ #206 │ #207 │ #208 │ #209 │ #210",
   ],
@@ -253,7 +317,9 @@ exports[`golden overflow statuses width 110 1`] = `
     "pr.hidden-10",
     "pr.hidden-9",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ #205 │ #206 │ #207 │ #208 │ +2 ●1 ●1",
   ],
@@ -270,7 +336,9 @@ exports[`golden overflow statuses width 90 1`] = `
     "pr.hidden-7",
     "pr.hidden-6",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ #205 │ +5 ●3 ●2",
   ],
@@ -288,7 +356,9 @@ exports[`golden overflow statuses width 80 1`] = `
     "pr.hidden-6",
     "pr.hidden-5",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ #202 │ #203 │ #204 │ +6 ●3 ●3",
   ],
@@ -309,7 +379,9 @@ exports[`golden overflow statuses width 60 1`] = `
     "pr.hidden-3",
     "pr.hidden-2",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ #127 │ #200 │ #201 │ +9 ●5 ●4",
   ],
@@ -333,7 +405,9 @@ exports[`golden overflow statuses width 45 1`] = `
     "pr.hidden-0",
     "pr.extra-4",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ #124 │ #125 │ #126 │ +12 ●6 ●5",
   ],
@@ -360,7 +434,9 @@ exports[`golden overflow statuses width 20 1`] = `
     "pr.extra-2",
     "pr.extra-1",
   ],
-  "level": "minimal",
+  "levels": {
+    "pr": "minimal",
+  },
   "rows": [
     "#123 ● │ +15 ●6 ●5",
   ],

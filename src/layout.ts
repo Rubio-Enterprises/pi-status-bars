@@ -1,5 +1,5 @@
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
-import { type Config, placement } from './config.ts';
+import { type Config, maxRows, placement } from './config.ts';
 import {
   DETAIL_LEVELS,
   type LineName,
@@ -22,15 +22,24 @@ export function form(segment: Segment, level: DetailLevel): Part[] {
 
 export interface LayoutResult {
   rows: string[];
-  level: DetailLevel;
+  levels: Record<string, DetailLevel>;
   dropped: string[];
   countdown: boolean;
 }
-interface Rendered {
+interface Entry {
   segment: Segment;
   place: ReturnType<typeof placement>;
-  parts: Array<{ part: Part; text: string }>;
+  group: string;
 }
+interface Rendered extends Entry {
+  parts: Array<{ part: Part; text: string; measured: string }>;
+}
+interface Row {
+  entries: Rendered[];
+  markers: Partial<Record<ZoneName, string>>;
+}
+type Counts = Record<ZoneName, { total: number; critical: number; warn: number }>;
+const countdownWidths = { full: 8, compact: 7, terse: 4, minimal: 0 };
 
 export function layout(
   segments: readonly Segment[],
@@ -42,121 +51,192 @@ export function layout(
   hyperlinks = false,
 ): LayoutResult {
   width = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
-  const collected = segments
-    .map((segment) => ({ segment, place: placement(segment, config) }))
+  let remaining: Entry[] = segments
+    .map((segment) => ({
+      segment,
+      place: placement(segment, config),
+      group: segment.id.split('.')[0] ?? segment.id,
+    }))
     .filter(({ place }) => place.line === line && !place.hidden)
-    .sort((a, b) => a.place.order - b.place.order || compare(a.segment.id, b.segment.id));
+    .sort(
+      (a, b) =>
+        compare(a.place.zone, b.place.zone) ||
+        a.place.order - b.place.order ||
+        compare(a.segment.id, b.segment.id),
+    );
+  const levels: Record<string, DetailLevel> = Object.fromEntries(
+    remaining.map(({ group }) => [group, 'full']),
+  );
   const dropped: string[] = [];
-  const counts = {
+  const counts: Counts = {
     left: { total: 0, critical: 0, warn: 0 },
     right: { total: 0, critical: 0, warn: 0 },
   };
+  const cap = maxRows(config, line);
   let showWarn = true;
   let showCritical = true;
-  let remaining = collected;
-  let level: DetailLevel = 'full';
-  let last: { text: string; countdown: boolean } = { text: '', countdown: false };
+  const separator = theme.fg('dim', ' │ ');
+  if (!(width && remaining.length)) return { rows: [], levels, dropped, countdown: false };
 
-  const render = () => {
-    let elastic: Rendered['parts'][number] | undefined;
-    const rendered: Rendered[] = remaining.map(({ segment, place }) => ({
-      segment,
-      place,
-      parts: form(segment, level).map((part) => ({
-        part,
-        text: renderPart(part, level, now, theme, hyperlinks),
-      })),
-    }));
-    for (const zone of ['left', 'right'] as const) {
-      for (const entry of rendered.filter((entry) => entry.place.zone === zone)) {
-        for (const entryPart of entry.parts) {
-          if ('elastic' in entryPart.part && entryPart.part.elastic) {
-            elastic ??= entryPart;
-            entryPart.text = '';
-          }
-        }
-      }
+  function marker(zone: ZoneName): string {
+    const count = counts[zone];
+    if (!count.total) return '';
+    let text = theme.fg('dim', `+${count.total}`);
+    for (const status of ['critical', 'warn'] as const) {
+      if (count[status] && (status === 'critical' ? showCritical : showWarn))
+        text += ` ${renderPart(
+          { kind: 'value', text: `●${count[status]}`, status },
+          'minimal',
+          now,
+          theme,
+          false,
+        )}`;
     }
+    return text;
+  }
+
+  function compose(row: Row, measured: boolean, pad: boolean): string {
     const zoneText = (zone: ZoneName) => {
-      const texts = rendered
+      const texts = row.entries
         .filter((entry) => entry.place.zone === zone)
-        .map((entry) => joinParts(entry.parts))
+        .map((entry) =>
+          joinParts(
+            entry.parts.map(({ part, text, measured: reserved }) => ({
+              part,
+              text: measured ? reserved : text,
+            })),
+          ),
+        )
         .filter(Boolean);
-      const count = counts[zone];
-      if (count.total) {
-        let marker = theme.fg('dim', `+${count.total}`);
-        for (const status of ['critical', 'warn'] as const) {
-          if (count[status] && (status === 'critical' ? showCritical : showWarn)) {
-            marker += ` ${renderPart(
-              { kind: 'value', text: `●${count[status]}`, status },
-              level,
-              now,
-              theme,
-              false,
-            )}`;
-          }
-        }
-        texts.push(marker);
+      if (row.markers[zone]) texts.push(row.markers[zone]);
+      return texts.join(separator);
+    };
+    const left = zoneText('left'),
+      right = zoneText('right');
+    const used = visibleWidth(left) + visibleWidth(right);
+    if (left && right) return left + ' '.repeat(pad ? Math.max(3, width - used) : 3) + right;
+    return right ? (pad ? ' '.repeat(Math.max(0, width - used)) : '') + right : left;
+  }
+
+  function pack(): Row[] {
+    const rendered: Rendered[] = remaining.map((entry) => {
+      const level = levels[entry.group] ?? 'full';
+      return {
+        ...entry,
+        parts: form(entry.segment, level).map((part) => {
+          const elastic = 'elastic' in part && part.elastic;
+          const text = elastic ? '' : renderPart(part, level, now, theme, hyperlinks);
+          return {
+            part,
+            text,
+            measured: part.kind === 'countdown' ? ' '.repeat(countdownWidths[level]) : text,
+          };
+        }),
+      };
+    });
+    const tails = {
+      left: rendered.filter((entry) => entry.place.zone === 'left').at(-1) ?? rendered.at(-1),
+      right: rendered.filter((entry) => entry.place.zone === 'right').at(-1) ?? rendered.at(-1),
+    };
+    const rows: Row[] = [];
+    for (const entry of rendered) {
+      const markers: Row['markers'] = {};
+      for (const zone of ['left', 'right'] as const) {
+        if (entry === tails[zone] && counts[zone].total) markers[zone] = marker(zone);
       }
-      return texts.join(theme.fg('dim', ' │ '));
-    };
-    const compose = (pad: boolean) => {
-      const left = zoneText('left');
-      const right = zoneText('right');
-      const used = visibleWidth(left) + visibleWidth(right);
-      if (left && right) return left + ' '.repeat(pad ? Math.max(3, width - used) : 3) + right;
-      return right ? (pad ? ' '.repeat(Math.max(0, width - used)) : '') + right : left;
-    };
-    if (elastic) {
-      const entry = elastic;
-      const without = visibleWidth(compose(false));
-      entry.text = renderPart(entry.part, level, now, theme, hyperlinks, 8);
-      const overhead = visibleWidth(compose(false)) - without - visibleWidth(entry.text);
-      const room = width - without - overhead;
-      entry.text = room >= 8 ? renderPart(entry.part, level, now, theme, hyperlinks, room) : '';
+      let row = rows.at(-1);
+      if (!row) {
+        row = { entries: [], markers: {} };
+        rows.push(row);
+      }
+      const trial: Row = {
+        entries: [...row.entries, entry],
+        markers: { ...row.markers, ...markers },
+      };
+      if (row.entries.length && visibleWidth(compose(trial, true, false)) > width) {
+        rows.push({ entries: [entry], markers });
+      } else {
+        row.entries.push(entry);
+        Object.assign(row.markers, markers);
+      }
     }
-    return {
-      text: compose(true),
-      countdown: rendered.some((entry) =>
-        entry.parts.some(({ part, text }) => part.kind === 'countdown' && !!text),
-      ),
-    };
-  };
+    return rows;
+  }
 
-  if (!(width && remaining.length)) return { rows: [], level, dropped, countdown: false };
-  for (const candidate of DETAIL_LEVELS) {
-    level = candidate;
-    last = render();
-    if (visibleWidth(last.text) <= width) return result();
+  const fits = (rows: Row[]) =>
+    rows.length <= cap && rows.every((row) => visibleWidth(compose(row, true, false)) <= width);
+  let packed = pack();
+  while (!fits(packed)) {
+    const groups = new Map<string, number>();
+    for (const entry of remaining)
+      groups.set(entry.group, Math.max(groups.get(entry.group) ?? -Infinity, entry.place.priority));
+    const group = [...groups].sort((a, b) => a[1] - b[1] || compare(a[0], b[0]))[0]?.[0];
+    if (!group) break;
+    const level = levels[group] ?? 'full';
+    if (level !== 'minimal') {
+      levels[group] = DETAIL_LEVELS[DETAIL_LEVELS.indexOf(level) + 1] ?? 'minimal';
+    } else if (remaining.length > 1) {
+      const victim = remaining
+        .filter((entry) => entry.group === group)
+        .sort(
+          (a, b) =>
+            a.place.priority - b.place.priority ||
+            b.place.order - a.place.order ||
+            compare(b.segment.id, a.segment.id),
+        )[0];
+      if (!victim) break;
+      dropped.push(victim.segment.id);
+      const count = counts[victim.place.zone];
+      count.total++;
+      const status = overflowStatus(victim.segment);
+      if (status) count[status]++;
+      remaining = remaining.filter((entry) => entry !== victim);
+    } else break;
+    packed = pack();
   }
-  while (remaining.length > 1) {
-    const victim = [...remaining].sort(
-      (a, b) =>
-        a.place.priority - b.place.priority ||
-        b.place.order - a.place.order ||
-        compare(b.segment.id, a.segment.id),
-    )[0];
-    if (!victim) break;
-    dropped.push(victim.segment.id);
-    const count = counts[victim.place.zone];
-    count.total++;
-    const status = overflowStatus(victim.segment);
-    if (status) count[status]++;
-    remaining = remaining.filter((entry) => entry !== victim);
-    last = render();
-    if (visibleWidth(last.text) <= width) return result();
+  if (!fits(packed)) {
+    showWarn = false;
+    packed = pack();
   }
-  showWarn = false;
-  last = render();
-  if (visibleWidth(last.text) <= width) return result();
-  showCritical = false;
-  last = render();
-  return result();
+  if (!fits(packed)) {
+    showCritical = false;
+    packed = pack();
+  }
 
-  function result(): LayoutResult {
-    const text = truncateToWidth(last.text, width, '…');
-    return { rows: text ? [text] : [], level, dropped, countdown: last.countdown };
-  }
+  let elasticAssigned = false;
+  let countdown = false;
+  const rows = packed
+    .slice(0, cap)
+    .map((row) => {
+      for (const entry of row.entries) {
+        for (const part of entry.parts) {
+          if (!('elastic' in part.part && part.part.elastic) || elasticAssigned) continue;
+          elasticAssigned = true;
+          const level = levels[entry.group] ?? 'full';
+          const without = visibleWidth(compose(row, false, false));
+          part.text = renderPart(part.part, level, now, theme, hyperlinks, 8);
+          const overhead =
+            visibleWidth(compose(row, false, false)) - without - visibleWidth(part.text);
+          const room = width - without - overhead;
+          part.text = room >= 8 ? renderPart(part.part, level, now, theme, hyperlinks, room) : '';
+        }
+      }
+      const natural = compose(row, false, true);
+      const text = truncateToWidth(natural, width, '…');
+      countdown ||= row.entries.some((entry) =>
+        entry.parts.some((part) => {
+          if (part.part.kind !== 'countdown' || !part.text) return false;
+          const start = natural.indexOf(part.text);
+          return (
+            start >= 0 &&
+            visibleWidth(natural.slice(0, start)) < visibleWidth(text.replace(/…$/, ''))
+          );
+        }),
+      );
+      return text;
+    })
+    .filter(Boolean);
+  return { rows, levels, dropped, countdown };
 }
 
 function overflowStatus(segment: Segment): 'critical' | 'warn' | undefined {

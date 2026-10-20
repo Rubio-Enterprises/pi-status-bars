@@ -1,7 +1,7 @@
 import { readFileSync, statSync } from 'node:fs';
 import { Type } from 'typebox';
 import { Value } from 'typebox/value';
-import { LineNameSchema, type Segment, ZoneNameSchema } from './contract.ts';
+import { type LineName, LineNameSchema, type Segment, ZoneNameSchema } from './contract.ts';
 
 const OverrideSchema = Type.Object({
   line: Type.Optional(LineNameSchema),
@@ -13,15 +13,47 @@ const OverrideSchema = Type.Object({
 export type Override = Partial<Pick<Segment, 'line' | 'zone' | 'order' | 'priority'>> & {
   hidden?: boolean;
 };
-export type Config = ReadonlyMap<string, Override>;
+export type Config = ReadonlyMap<string, Override> & {
+  readonly lines?: Partial<Record<LineName, { maxRows: number }>>;
+};
+export function maxRows(config: Config, line: LineName): number {
+  return config.lines?.[line]?.maxRows ?? (line === 'below' ? 2 : 1);
+}
 const fields = ['line', 'zone', 'order', 'priority', 'hidden'] as const;
 const idPattern = /^[a-z][a-z0-9-]*\.[a-z0-9][a-z0-9.-]*$/;
 
 export function parseConfig(input: unknown, warn: (message: string) => void): Config {
-  const config = new Map<string, Override>();
+  const config: Map<string, Override> & Pick<Config, 'lines'> = new Map();
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     warn('Invalid status-bars.json: expected an object; using no overrides.');
     return config;
+  }
+  if ('lines' in input) {
+    if (!input.lines || typeof input.lines !== 'object' || Array.isArray(input.lines)) {
+      warn('Invalid status-bars.json lines: expected an object.');
+    } else {
+      const lines: NonNullable<Config['lines']> = {};
+      for (const line of ['above', 'below'] as const) {
+        if (!(line in input.lines)) continue;
+        const entry = (input.lines as Record<string, unknown>)[line];
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+          warn(`Invalid status-bars.json lines.${line}; ignoring it.`);
+          continue;
+        }
+        if (!('maxRows' in entry)) continue;
+        if (
+          typeof entry.maxRows !== 'number' ||
+          !Number.isInteger(entry.maxRows) ||
+          entry.maxRows < 1 ||
+          entry.maxRows > 4
+        ) {
+          warn(`Invalid status-bars.json lines.${line}.maxRows; expected an integer 1–4.`);
+          continue;
+        }
+        lines[line] = { maxRows: entry.maxRows };
+      }
+      if (Object.keys(lines).length) Object.assign(config, { lines });
+    }
   }
   if (!('segments' in input)) return config;
   if (!input.segments || typeof input.segments !== 'object' || Array.isArray(input.segments)) {
@@ -82,7 +114,7 @@ export class ConfigStore {
       this.config = new Map();
       this.config = parseConfig(JSON.parse(readFileSync(this.path, 'utf8')), this.warn);
     } catch (error) {
-      if (this.config.size) this.config = new Map();
+      if (this.config.size || this.config.lines) this.config = new Map();
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') this.stamp = undefined;
       else
         this.warn(
