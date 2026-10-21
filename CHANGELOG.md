@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.2.2...v1.2.3) (2026-10-21)
+
+
+### Bug Fixes
+
+* **deps:** take typebox from pi through the shared kits ([b44a127](https://github.com/Rubio-Enterprises/pi-status-bars/commit/b44a127c17b03e595f6c9dd6f2da1ee496de68b6))
+
 ## [1.2.2](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.2.1...v1.2.2) (2026-10-21)
 
 
