@@ -5,7 +5,7 @@
     "": {
       "name": "pi-status-bars",
       "dependencies": {
-        "pi-core-kit": "git+https://github.com/Rubio-Enterprises/pi-core-kit.git#v2.1.0",
+        "pi-core-kit": "git+https://github.com/Rubio-Enterprises/pi-core-kit.git#v2.1.2",
       },
       "devDependencies": {
         "@commitlint/cli": "21.2.3",
@@ -366,7 +366,7 @@
 
     "path-key": ["path-key@3.1.1", "", {}, "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="],
 
-    "pi-core-kit": ["pi-core-kit@github:Rubio-Enterprises/pi-core-kit#4314fea", { "dependencies": { "typebox": "^1.3.27" } }, "Rubio-Enterprises-pi-core-kit-4314fea", "sha512-qxAp5dgUTj12tLZdd2KWn6I95TvF/cSIl1KccdyIy00s7T1s5gOEQkXzwmkO1GCqoKZf0ew8+D8uQZSLc51rtg=="],
+    "pi-core-kit": ["pi-core-kit@github:Rubio-Enterprises/pi-core-kit#550c723", { "peerDependencies": { "typebox": "*" } }, "Rubio-Enterprises-pi-core-kit-550c723", "sha512-b+kvmZiX73VW49XufLS/Rg/f9ImkjfdTMlJ5Z7Ly9v3QNFmA0XjPk5Q6kCwwN2UJcQbp03AsWUyeqADIFNBCBg=="],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
