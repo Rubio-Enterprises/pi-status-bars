@@ -38,4 +38,6 @@ factories. Keep both load orders, reload/shutdown cleanup, and plain-theme layou
 nine widths. Keep the Bun runner's positive-count contract.
 
 Pi packages are host-provided `*` peers with exact 1.3.0 development pins, never runtime
-dependencies. TypeBox 1.3.27 is the contract's runtime dependency.
+dependencies. TypeBox 1.3.27 is the contract's runtime dependency. pi-core-kit (pinned to a
+release tag) reads `status-bars.json`; `ConfigStore` keeps the warn-once policy and re-derives
+overrides only when the read outcome changes.

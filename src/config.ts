@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from 'node:fs';
+import { ConfigFile, type ConfigRead } from 'pi-core-kit/config-file';
 import { Type } from 'typebox';
 import { Value } from 'typebox/value';
 import { type LineName, LineNameSchema, type Segment, ZoneNameSchema } from './contract.ts';
@@ -87,17 +87,21 @@ export function placement(segment: Segment, config: Config) {
 }
 
 export class ConfigStore {
-  private stamp: string | undefined;
+  private readonly file: ConfigFile;
+  private seen: ConfigRead | undefined;
   private config: Config = new Map();
   private warned = new Set<string>();
   constructor(
     readonly path: string,
     private notify: (message: string) => void,
-  ) {}
+  ) {
+    this.file = new ConfigFile(path);
+  }
 
+  /** Forget warnings already shown, so the next read warns again for the same problem. */
   resetWarnings() {
     this.warned.clear();
-    this.stamp = undefined;
+    this.seen = undefined;
   }
   private warn = (message: string) => {
     if (this.warned.has(message)) return;
@@ -106,17 +110,13 @@ export class ConfigStore {
   };
 
   read(): Config {
-    try {
-      const stat = statSync(this.path);
-      const stamp = `${stat.mtimeMs}:${stat.size}`;
-      if (stamp === this.stamp) return this.config;
-      this.stamp = stamp;
+    const outcome = this.file.read();
+    if (outcome === this.seen) return this.config;
+    this.seen = outcome;
+    if (outcome.status === 'value') this.config = parseConfig(outcome.value, this.warn);
+    else {
       this.config = new Map();
-      this.config = parseConfig(JSON.parse(readFileSync(this.path, 'utf8')), this.warn);
-    } catch (error) {
-      if (this.config.size || this.config.lines) this.config = new Map();
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') this.stamp = undefined;
-      else
+      if (outcome.status === 'invalid')
         this.warn(
           'Cannot read status-bars.json; using no overrides. Check its JSON and permissions.',
         );
