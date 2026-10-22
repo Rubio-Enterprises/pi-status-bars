@@ -10,7 +10,8 @@ concurrency:
 jobs:
   canonical-tests:
     name: canonical tests
-    runs-on: ${{ fromJSON(vars.RUNNERS || '{}').small || fromJSON('["ubuntu-slim"]') }}
+    # Public repos always use the fallback; the layout budget tests need ubuntu-latest, not ubuntu-slim
+    runs-on: ${{ fromJSON(vars.RUNNERS || '{}').medium || fromJSON('["ubuntu-latest"]') }}
     # Bound the job so a hung step fails fast instead of holding a runner until
     # outrunner's 2h30m reaper. Raise it to about three times the suite's
     # slowest successful run when the canonical suite needs longer.
