@@ -1,8 +1,18 @@
 {
-  "name": "Rubio Dev Container",
+  "name": "pi-status-bars",
   "image": "mcr.microsoft.com/devcontainers/base:2.2.1-trixie",
   "features": {
     "ghcr.io/rubio-enterprises/devcontainer-features/baseline:3.0.0": {}
   },
+  "customizations": {
+    "fly-durable": {
+      "setupHosts": ["codeload.github.com"]
+    }
+  },
+  "mounts": [
+    "source=${devcontainerId}-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ],
+  "securityOpt": ["no-new-privileges=false"],
+  "onCreateCommand": "sudo chown vscode node_modules",
   "updateContentCommand": "mise run setup"
 }
