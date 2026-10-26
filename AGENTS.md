@@ -1,8 +1,10 @@
 # Agent context
 
 This repo follows Rubio-Enterprises standards. Use `mise tasks` to discover commands;
-`mise run lint`, `typecheck`, and `test` are the local checks. Generated lint configs belong
-to standards; edit their `.local` sidecars and regenerate with `mise run lint-config`.
+`mise run lint`, `typecheck`, and `test` are the local checks. Shared tool configs, tasks and
+hooks come from the gitignored `.standards-config/` checkout: on a fresh clone run
+`mise bootstrap --only repos,tools --yes` first. Put repository exceptions in each tool's own
+Config Stub (`biome.jsonc`, `tsconfig.json`) or in `lefthook-local.yml`.
 
 ## Repository guidance
 

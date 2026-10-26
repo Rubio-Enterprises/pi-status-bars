@@ -182,10 +182,16 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
 ## Development
 
 ```bash
+mise trust && mise bootstrap --only repos,tools --yes
+mise run setup
 mise run lint
 mise run typecheck
 mise run test
 ```
+
+The bootstrap clones the shared standards configuration into the gitignored `.standards-config/`
+and installs the pinned tools; the lint configs, tasks and Git hooks read it, and fail until it
+exists. `mise run setup` refreshes it and installs dependencies.
 
 Tests include plain-theme layout goldens at 200/167/160/130/110/90/80/60/45/20 columns,
 seeded layout and validation fuzz, row-cap configuration, backfill priority/reverse-drop/retry
