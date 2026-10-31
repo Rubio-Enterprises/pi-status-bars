@@ -182,23 +182,22 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
 ## Development
 
 ```bash
-mise trust && mise bootstrap --only repos,tools --yes
-mise run setup
-mise run lint
+mise trust
+mise run setup      # standards package, tools, bun install, git hooks
+mise run check      # every check from @rubio-enterprises/standards
 mise run typecheck
-mise run test
+mise run test       # JUnit report in reports/test/
 ```
 
-The bootstrap clones the shared standards configuration into the gitignored `.standards-config/`
-and installs the pinned tools; the lint configs, tasks and Git hooks read it, and fail until it
-exists. `mise run setup` refreshes it and installs dependencies.
+`mise run setup` needs a `NODE_AUTH_TOKEN` that can read the `@rubio-enterprises` packages
+(for example `gh auth token`).
 
 Tests include plain-theme layout goldens at 200/167/160/130/110/90/80/60/45/20 columns,
 seeded layout and validation fuzz, row-cap configuration, backfill priority/reverse-drop/retry
 and determinism tests, countdown stability and toggle tests.
 Real Pi 1.3.0 SDK sessions cover both load orders, two-row rendering, replacement, clearing,
 reload and shutdown.
-The canonical Bun runner rejects zero tests and records positive-count proof for Test Gate.
+The Test Gate rejects a run that executes zero tests.
 
 ## Contributing
 

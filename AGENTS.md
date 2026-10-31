@@ -1,10 +1,10 @@
 # Agent context
 
-This repo follows Rubio-Enterprises standards. Use `mise tasks` to discover commands;
-`mise run lint`, `typecheck`, and `test` are the local checks. Shared tool configs, tasks and
-hooks come from the gitignored `.standards-config/` checkout: on a fresh clone run
-`mise bootstrap --only repos,tools --yes` first. Put repository exceptions in each tool's own
-Config Stub (`biome.jsonc`, `tsconfig.json`) or in `lefthook-local.yml`.
+Checks come from `@rubio-enterprises/standards`. Run `mise run setup` once (it needs
+`NODE_AUTH_TOKEN` and installs the package, tools, dependencies and git hooks), then
+`mise run check`, `mise run typecheck` and `mise run test` (JUnit in `reports/test/`); `mise tasks`
+lists the rest. Put repository exceptions in each tool's own config (`biome.jsonc`,
+`tsconfig.json`) or in `lefthook.override.yml`.
 
 ## Repository guidance
 
@@ -37,7 +37,7 @@ Invariants:
 
 `tests/integration.test.ts` drives real Pi 1.3.0 SDK AgentSessions with inline publisher/renderer
 factories. Keep both load orders, reload/shutdown cleanup, and plain-theme layout goldens at all
-nine widths. Keep the Bun runner's positive-count contract.
+nine widths.
 
 Pi packages are host-provided `*` peers with exact 1.3.0 development pins, never runtime
 dependencies. TypeBox 1.3.27 is the contract's runtime dependency. pi-core-kit (pinned to a
