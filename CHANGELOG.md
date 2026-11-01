@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.2.3...v1.3.0) (2026-11-01)
+
+
+### Features
+
+* enable codewiki ([#33](https://github.com/Rubio-Enterprises/pi-status-bars/issues/33)) ([74e9b4a](https://github.com/Rubio-Enterprises/pi-status-bars/commit/74e9b4a15ceb8067c2262f0b291084e0eb4feead))
+
 ## [1.2.3](https://github.com/Rubio-Enterprises/pi-status-bars/compare/v1.2.2...v1.2.3) (2026-10-21)
 
 
