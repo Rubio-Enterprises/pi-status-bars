@@ -37,6 +37,9 @@ jobs:
     permissions:
       contents: read
     uses: Rubio-Enterprises/.github/.github/workflows/project-route.yml@main
+    with:
+      # medium: the layout budget tests (tests/layout-performance.test.ts) need more than ubuntu-slim.
+      route: medium
 
   test-gate:
     name: test-gate
