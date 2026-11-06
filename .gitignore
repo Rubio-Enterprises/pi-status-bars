@@ -23,4 +23,4 @@ reports/
 .vite/
 .turbo/
 .tsbuildinfo
-.standards/
+.venv/

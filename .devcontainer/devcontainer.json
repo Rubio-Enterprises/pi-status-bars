@@ -1,17 +1,13 @@
 {
   "name": "pi-status-bars",
-  "image": "ghcr.io/rubio-enterprises/pi-status-bars/devcontainer:main",
+  "dockerComposeFile": ["../compose.yaml"],
+  "service": "dev",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": false,
   "customizations": {
     "fly-durable": {
       "setupHosts": ["codeload.github.com"]
     }
-  },
-  "mounts": [
-    "source=${devcontainerId}-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
-  ],
-  "securityOpt": ["no-new-privileges=false"],
-  "onCreateCommand": "sudo chown vscode node_modules && mise run setup",
-  "remoteEnv": {
-    "NODE_AUTH_TOKEN": "${localEnv:NODE_AUTH_TOKEN}"
   }
 }

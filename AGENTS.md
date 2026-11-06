@@ -43,3 +43,23 @@ Pi packages are host-provided `*` peers with exact 1.3.0 development pins, never
 dependencies. TypeBox 1.3.27 is the contract's runtime dependency. pi-core-kit (pinned to a
 release tag) reads `status-bars.json`; `ConfigStore` keeps the warn-once policy and re-derives
 overrides only when the read outcome changes.
+
+## Commands
+
+First command in a fresh checkout: `just build`.
+Never install toolchains on the host — all project commands run in the dev image through `just`.
+
+```bash
+just build
+just setup
+just check
+just fmt
+just check-pr
+just typecheck
+just test
+just setup-deps
+just shell
+just exec <cmd...>
+```
+
+Single test: `just exec uv run pytest path::test` (Python); otherwise prefix the underlying runner with `just exec`.
