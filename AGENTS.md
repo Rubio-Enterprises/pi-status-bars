@@ -1,8 +1,7 @@
 # Agent context
 
-Checks come from `@rubio-enterprises/standards`. Run `mise run setup` once (it needs
-`NODE_AUTH_TOKEN` and installs the package, tools, dependencies and git hooks), then
-`mise run check`, `mise run typecheck` and `mise run test` (JUnit in `reports/test/`); `mise tasks`
+Checks come from `@rubio-enterprises/standards`. Run `just build && just setup` once (dependencies and git hooks), then
+`just check`, `just typecheck` and `just test` (JUnit in `reports/test/`); `just --list`
 lists the rest. Put repository exceptions in each tool's own config (`biome.jsonc`,
 `tsconfig.json`) or in `lefthook.override.yml`.
 
