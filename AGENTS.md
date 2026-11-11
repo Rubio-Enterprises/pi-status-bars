@@ -11,9 +11,15 @@ lists the rest. Put repository exceptions in each tool's own config (`biome.json
 `validate.ts` rejects and sanitizes publications. `config.ts` owns read-only overrides and the
 single `placement()` function. `layout.ts` is pure layout; `parts.ts` owns semantic styling.
 Use [GLOSSARY.md](GLOSSARY.md) vocabulary and preserve the
-[renderer/publisher split](docs/adr/0001-own-renderer-publisher-split.md).
+[renderer/publisher split](docs/adr/0003-own-renderer-publisher-split.md).
 
 Invariants:
+
+- **Architecture decisions**: an ADR records why a rule exists. Before changing a decision, check
+  `docs/adr/` for an accepted ADR; reversing one needs a superseding ADR. Write one only if a
+  person approved it: in the session, or in an approved plan or `delegate-to-agent` issue that
+  names the ADR. Otherwise the PR description is the record. Follow
+  [the format](docs/adr/0001-record-architecture-decisions.md), which states the ADR test.
 
 - Own only `status-bars.above` and `status-bars.below` editor-adjacent lines. Keep Pi's footer,
   header and all other extensions' status texts untouched.

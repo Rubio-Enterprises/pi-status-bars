@@ -24,10 +24,10 @@ Requires Pi 1.3.0; publishers have no drawing fallback when this renderer is abs
 
 Read the [glossary](GLOSSARY.md) for line, segment, form, detail level, zone, part,
 elastic part, publisher and renderer.
-The [decision record](docs/adr/0001-own-renderer-publisher-split.md) explains why existing
+The [decision record](docs/adr/0003-own-renderer-publisher-split.md) explains why existing
 statusline packages did not fit: they take over Pi's footer or lack shared detail levels,
-semantic parts, countdowns and elastic titles. [ADR-0002](docs/adr/0002-wrapping-lines-per-publisher-degradation.md)
-records wrapping and per-publisher degradation.
+semantic parts, countdowns and elastic titles. The [design invariants](#design-invariants)
+describe wrapping and per-publisher degradation.
 
 ## Install
 

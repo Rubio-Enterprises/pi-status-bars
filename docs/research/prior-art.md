@@ -1,6 +1,6 @@
 # Pi shared status renderer prior art
 
-This survey of published Pi statusline and footer packages was retrieved on 2026-10-20, before this renderer existed. It found no as-shipped renderer with semantic degradation; [ADR 0001](../adr/0001-own-renderer-publisher-split.md) records the decision to build our own, and [ADR 0002](../adr/0002-wrapping-lines-per-publisher-degradation.md) later amended its layout rule. Versions, downloads and activity dates below are as retrieved.
+This survey of published Pi statusline and footer packages was retrieved on 2026-10-20, before this renderer existed. It found no as-shipped renderer with semantic degradation; [ADR 0003](../adr/0003-own-renderer-publisher-split.md) records the decision to build our own. The renderer now wraps lines before degrading publisher groups. Versions, downloads and activity dates below are as retrieved.
 
 ## Verdict
 
