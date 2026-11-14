@@ -1,4 +1,5 @@
 .DS_Store
+.env
 .envrc.local
 # .mise.local.toml stays trackable for committed repository tools, tasks and env
 # Use .envrc.local for machine-local values

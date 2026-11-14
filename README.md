@@ -182,15 +182,12 @@ unsafe URLs render as plain text. Invalid payloads never throw and warn once per
 ## Development
 
 ```bash
-mise trust
-mise run setup      # standards package, tools, bun install, git hooks
-mise run check      # every check from @rubio-enterprises/standards
-mise run typecheck
-mise run test       # JUnit report in reports/test/
+just build
+just setup
+just check
+just typecheck
+just test       # JUnit report in reports/test/
 ```
-
-`mise run setup` needs a `NODE_AUTH_TOKEN` that can read the `@rubio-enterprises` packages
-(for example `gh auth token`).
 
 Tests include plain-theme layout goldens at 200/167/160/130/110/90/80/60/45/20 columns,
 seeded layout and validation fuzz, row-cap configuration, backfill priority/reverse-drop/retry
